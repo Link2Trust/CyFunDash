@@ -3,8 +3,8 @@
 The project is a single-page-style web dashboard consisting of 5 files (plus one source Excel file):
 
 **1. parse_excel.py** — Data Extraction Pipeline
-	•  Responsibility: Offline ETL script that reads the CyFun2025 Excel workbook and produces data.json.
-	•  Key functions:
+- Responsibility: Offline ETL script that reads the CyFun2025 Excel workbook and produces data.json.
+- Key functions:
 		◦  parse_function_sheet(ws, sheet_name) — Iterates rows of the 6 NIST CSF function sheets (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), extracting a hierarchy of categories → subcategories → requirements. Detects key measures via "Key Measure" text in column C.
 		◦  parse_summary(wb) — Reads the "ESSENTIAL Summary" sheet for category target maturities and the 29 key measures from 3 column groups (L-N, S-U, Z-AB). Uses a regex pattern (^[A-Z]{2}\.[A-Z]{2}-\d) to filter header rows from actual KM codes.
 		◦  parse_maturity_levels(wb) — Extracts the 5 maturity level definitions with documentation/implementation descriptions.
