@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyFun® 2025 — CyberFundamentals Dashboard</title>
+  <style>
+    :root {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --text-secondary: #5a5a7a;
+      --border: #e2e4e9;
+      --accent: #2563eb;
+      --accent-light: #dbeafe;
+
+      --basic-bg: #ecfdf5;
+      --basic-border: #6ee7b7;
+      --basic-text: #065f46;
+      --basic-badge: #059669;
+
+      --important-bg: #fffbeb;
+      --important-border: #fbbf24;
+      --important-text: #78350f;
+      --important-badge: #d97706;
+
+      --essential-bg: #fef2f2;
+      --essential-border: #fca5a5;
+      --essential-text: #7f1d1d;
+      --essential-badge: #dc2626;
+
+      --govern: #6366f1;
+      --identify: #0891b2;
+      --protect: #059669;
+      --detect: #d97706;
+      --respond: #dc2626;
+      --recover: #7c3aed;
+
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .header h1 span { color: #60a5fa; }
+    .header-meta {
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+    .nav-links { display: flex; gap: 0.5rem; }
+    .nav-link {
+      color: #94a3b8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+      padding: 0.4rem 0.85rem; border-radius: 6px; transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
+    .nav-link.active { background: rgba(255,255,255,0.15); }
+
+    /* Assurance Level Selector */
+    .level-selector {
+      max-width: 1400px;
+      margin: 1.5rem auto;
+      padding: 0 1rem;
+    }
+    .level-selector h2 {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+    .level-buttons {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .level-btn {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: var(--shadow);
+    }
+    .level-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .level-btn .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .level-btn[data-level="Basic"] .dot { background: var(--basic-badge); }
+    .level-btn[data-level="Important"] .dot { background: var(--important-badge); }
+    .level-btn[data-level="Essential"] .dot { background: var(--essential-badge); }
+
+    .level-btn.active[data-level="Basic"] {
+      border-color: var(--basic-badge);
+      background: var(--basic-bg);
+      color: var(--basic-text);
+    }
+    .level-btn.active[data-level="Important"] {
+      border-color: var(--important-badge);
+      background: var(--important-bg);
+      color: var(--important-text);
+    }
+    .level-btn.active[data-level="Essential"] {
+      border-color: var(--essential-badge);
+      background: var(--essential-bg);
+      color: var(--essential-text);
+    }
+    .level-btn .count {
+      font-size: 0.8rem;
+      font-weight: 400;
+      opacity: 0.7;
+    }
+
+    /* Key Measure Toggle */
+    .km-toggle {
+      padding: 0.75rem 1.5rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: var(--shadow);
+      color: var(--text);
+    }
+    .km-toggle:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .km-toggle.active {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--accent);
+    }
+    .km-toggle .km-star {
+      font-size: 1rem;
+    }
+
+    /* Stats Bar */
+    .stats-bar {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--border);
+    }
+    .stat-card .stat-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .stat-card .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* Main Content */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+    }
+
+    /* Function Section */
+    .function-section {
+      margin-bottom: 1.5rem;
+    }
+    .function-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      border-left: 5px solid;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .function-header:hover { background: #f8f9fb; }
+    .function-header.collapsed { border-radius: var(--radius); }
+    .function-header .fn-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+    .function-header .fn-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex: 1;
+    }
+    .function-header .fn-count {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      background: var(--bg);
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+    }
+    .function-header .chevron {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+    .function-header.collapsed .chevron { transform: rotate(-90deg); }
+
+    .function-body {
+      background: var(--surface);
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .function-body.hidden { display: none; }
+
+    /* Category */
+    .category {
+      border-top: 1px solid var(--border);
+    }
+    .category-header {
+      padding: 0.85rem 1.25rem 0.85rem 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .category-header:hover { background: #f8f9fb; }
+    .category-header .cat-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      flex: 1;
+    }
+    .category-header .cat-count {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .category-header .chevron-sm {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s;
+    }
+    .category-header.collapsed .chevron-sm { transform: rotate(-90deg); }
+
+    .category-body { padding: 0 1.25rem 0.75rem 1.75rem; }
+    .category-body.hidden { display: none; }
+
+    /* Subcategory */
+    .subcategory {
+      margin-bottom: 0.75rem;
+    }
+    .subcategory-header {
+      padding: 0.35rem 0 0.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .subcategory-info { flex: 1; }
+    .subcategory-code {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .subcategory-desc {
+      font-size: 0.88rem;
+      color: var(--text);
+      margin-top: 0.15rem;
+    }
+    .score-pills {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .score-pill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.1rem;
+    }
+    .score-pill .score-label {
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    .score-pill .score-value {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      min-width: 32px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .score-pill .score-value.s-na { background: #f3f4f6; color: #9ca3af; }
+    .score-pill .score-value.s-1 { background: #fef2f2; color: #dc2626; }
+    .score-pill .score-value.s-2 { background: #fff7ed; color: #ea580c; }
+    .score-pill .score-value.s-3 { background: #fffbeb; color: #d97706; }
+    .score-pill .score-value.s-4 { background: #ecfdf5; color: #059669; }
+    .score-pill .score-value.s-5 { background: #eff6ff; color: #2563eb; }
+
+    /* Category scores */
+    .cat-scores {
+      display: flex;
+      gap: 0.35rem;
+      flex-shrink: 0;
+      align-items: center;
+      margin-right: 0.5rem;
+    }
+
+    /* Requirement */
+    .requirement {
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 0.35rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      align-items: flex-start;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .requirement.level-Basic {
+      background: var(--basic-bg);
+      border-left: 3px solid var(--basic-border);
+    }
+    .requirement.level-Important {
+      background: var(--important-bg);
+      border-left: 3px solid var(--important-border);
+    }
+    .requirement.level-Essential {
+      background: var(--essential-bg);
+      border-left: 3px solid var(--essential-border);
+    }
+    .requirement .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .requirement.level-Basic .badge {
+      background: var(--basic-badge);
+      color: white;
+    }
+    .requirement.level-Important .badge {
+      background: var(--important-badge);
+      color: white;
+    }
+    .requirement.level-Essential .badge {
+      background: var(--essential-badge);
+      color: white;
+    }
+    .requirement .key-measure {
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
+    .requirement .req-text { flex: 1; }
+
+    .search-only { display: none; }
+
+    /* Maturity Selectors */
+    .maturity-selectors {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .maturity-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+    }
+    .maturity-group label {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+    .maturity-select {
+      width: 54px;
+      padding: 0.2rem 0.15rem;
+      border: 1.5px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: white;
+      color: var(--text);
+      cursor: pointer;
+      text-align: center;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .maturity-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-light);
+    }
+    .maturity-select.score-na { background: #f3f4f6; color: #9ca3af; }
+    .maturity-select.score-1 { background: #fef2f2; color: #dc2626; }
+    .maturity-select.score-2 { background: #fff7ed; color: #ea580c; }
+    .maturity-select.score-3 { background: #fffbeb; color: #d97706; }
+    .maturity-select.score-4 { background: #ecfdf5; color: #059669; }
+    .maturity-select.score-5 { background: #eff6ff; color: #2563eb; }
+
+    .requirement.filtered-out,
+    .subcategory.filtered-out,
+    .category.filtered-out,
+    .function-section.filtered-out { display: none; }
+
+    /* Legend */
+    .legend {
+      max-width: 1400px;
+      margin: 0 auto 1.5rem;
+      padding: 0 1rem;
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .legend-title {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .legend-swatch {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+    }
+
+    /* Search */
+    .search-bar {
+      max-width: 1400px;
+      margin: 0 auto 1rem;
+      padding: 0 1rem;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.7rem 1rem 0.7rem 2.5rem;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%235a5a7a' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 0.85rem center;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 { font-size: 1.2rem; }
+      .level-btn { padding: 0.6rem 1rem; font-size: 0.85rem; }
+      .function-header .fn-title { font-size: 0.95rem; }
+      .stats-bar { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    /* Print */
+    @media print {
+      .header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .function-body, .category-body { display: block !important; }
+      .level-selector, .search-bar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <h1><span>CyFun®</span> 2025 CyberFundamentals Dashboard</h1>
+        <div class="header-meta">Self-Assessment Controls Overview</div>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link active">Controls</a>
+        <a href="summary.html" class="nav-link">Summary</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="level-selector">
+    <h2>Select Assurance Level</h2>
+    <div class="level-buttons" id="levelButtons">
+      <button class="level-btn active" data-level="Basic" onclick="setLevel('Basic')">
+        <span class="dot"></span>
+        Basic
+        <span class="count" id="countBasic"></span>
+      </button>
+      <button class="level-btn active" data-level="Important" onclick="setLevel('Important')">
+        <span class="dot"></span>
+        Important
+        <span class="count" id="countImportant"></span>
+      </button>
+      <button class="level-btn active" data-level="Essential" onclick="setLevel('Essential')">
+        <span class="dot"></span>
+        Essential
+        <span class="count" id="countEssential"></span>
+      </button>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;margin-top:0.75rem">
+      <button class="km-toggle" id="kmToggle" onclick="toggleKeyMeasures()">
+        <span class="km-star">★</span>
+        Key Measures Only
+        <span class="count" id="countKM"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+
+  <div class="legend">
+    <span class="legend-title">Assurance Level:</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--basic-badge)"></span> Basic</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--important-badge)"></span> Important</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--essential-badge)"></span> Essential</span>
+    <span class="legend-item" style="margin-left:1rem"><span style="color:var(--accent);font-weight:600;font-size:0.8rem">★</span> Key Measure</span>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="Search controls..." oninput="applyFilters()">
+  </div>
+
+  <div class="main" id="mainContent"></div>
+
+  <script>
+    let data = null;
+    let selectedLevel = 'Essential'; // Show all by default
+    let keyMeasuresOnly = false;
+    let scores = {}; // { reqId: { doc: '0', impl: '0' } }
+    const STORAGE_KEY = 'cyfun2025_scores';
+    const LEVEL_HIERARCHY = { 'Basic': 1, 'Important': 2, 'Essential': 3 };
+    const MATURITY_OPTIONS = [
+      { value: '0', label: 'N/A' },
+      { value: '1', label: '1' },
+      { value: '2', label: '2' },
+      { value: '3', label: '3' },
+      { value: '4', label: '4' },
+      { value: '5', label: '5' },
+    ];
+    const FN_COLORS = {
+      GOVERN: '#6366f1',
+      IDENTIFY: '#0891b2',
+      PROTECT: '#059669',
+      DETECT: '#d97706',
+      RESPOND: '#dc2626',
+      RECOVER: '#7c3aed'
+    };
+
+    // Load data
+    fetch('data.json')
+      .then(r => r.json())
+      .then(d => { data = d; return init(); })
+      .catch(e => {
+        document.getElementById('mainContent').innerHTML =
+          '<p style="padding:2rem;color:#dc2626">Error loading data. Run <code>python3 parse_excel.py</code> first.</p>';
+      });
+
+    async function init() {
+      await loadScores();
+      updateCounts();
+      renderStats();
+      renderFunctions();
+      const savedLevel = localStorage.getItem('cyfun2025_level');
+      setLevel(savedLevel && LEVEL_HIERARCHY[savedLevel] ? savedLevel : 'Essential');
+    }
+
+    async function loadScores() {
+      // Try loading from server file first, fall back to localStorage
+      try {
+        const resp = await fetch('scores.json?_=' + Date.now());
+        if (resp.ok) {
+          const saved = await resp.json();
+          if (saved.scores) scores = saved.scores;
+          if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
+          // Sync to localStorage
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
+          if (saved.level) try { localStorage.setItem('cyfun2025_level', saved.level); } catch(e) {}
+          return;
+        }
+      } catch(e) {}
+      // Fallback: localStorage
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) scores = JSON.parse(stored);
+      } catch(e) { scores = {}; }
+    }
+
+    function saveScores() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
+      // Auto-save to server
+      saveToServer();
+    }
+
+    let saveTimer = null;
+    function saveToServer() {
+      // Debounce: wait 500ms after last change before saving
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        fetch('/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scores, level: selectedLevel })
+        }).catch(() => {}); // silent fail
+      }, 500);
+    }
+
+    function setScore(reqId, type, value) {
+      if (!scores[reqId]) scores[reqId] = { doc: '0', impl: '0' };
+      scores[reqId][type] = value;
+      saveScores();
+      // Update select styling
+      const sel = document.getElementById(`${type}-${reqId}`);
+      if (sel) updateSelectStyle(sel, value);
+      // Recalculate scores
+      updateAllScores();
+    }
+
+    function effectiveScore(reqId, type) {
+      const s = scores[reqId] && scores[reqId][type];
+      if (!s || s === '0') return 1; // N/A = 1
+      return parseInt(s);
+    }
+
+    function getScoreClass(val) {
+      if (val === null) return 's-na';
+      const rounded = Math.floor(val);
+      if (rounded < 1) return 's-na';
+      if (rounded > 5) return 's-5';
+      return 's-' + rounded;
+    }
+
+    function formatScore(val) {
+      if (val === null) return '-';
+      return val % 1 === 0 ? val.toString() : val.toFixed(1);
+    }
+
+    function updateAllScores() {
+      if (!data) return;
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel];
+
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        for (let ci = 0; ci < categories.length; ci++) {
+          const cat = categories[ci];
+          let catDocScores = [];
+          let catImplScores = [];
+
+          for (let si = 0; si < cat.subcategories.length; si++) {
+            const sub = cat.subcategories[si];
+            let subDocScores = [];
+            let subImplScores = [];
+
+            for (let ri = 0; ri < sub.requirements.length; ri++) {
+              const req = sub.requirements[ri];
+              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+              if (reqLevel > maxLevel) continue;
+              if (keyMeasuresOnly && !req.key_measure) continue;
+
+              const reqId = `${fnName}-${ci}-${si}-${ri}`;
+              subDocScores.push(effectiveScore(reqId, 'doc'));
+              subImplScores.push(effectiveScore(reqId, 'impl'));
+            }
+
+            // Subcategory score = minimum of requirement scores
+            const subDoc = subDocScores.length > 0 ? Math.min(...subDocScores) : null;
+            const subImpl = subImplScores.length > 0 ? Math.min(...subImplScores) : null;
+
+            // Update subcategory score display
+            const subDocEl = document.getElementById(`subDoc-${fnName}-${ci}-${si}`);
+            const subImplEl = document.getElementById(`subImpl-${fnName}-${ci}-${si}`);
+            if (subDocEl) {
+              subDocEl.textContent = formatScore(subDoc);
+              subDocEl.className = 'score-value ' + getScoreClass(subDoc);
+            }
+            if (subImplEl) {
+              subImplEl.textContent = formatScore(subImpl);
+              subImplEl.className = 'score-value ' + getScoreClass(subImpl);
+            }
+
+            if (subDoc !== null) catDocScores.push(subDoc);
+            if (subImpl !== null) catImplScores.push(subImpl);
+          }
+
+          // Category score = average of subcategory scores
+          const catDoc = catDocScores.length > 0
+            ? catDocScores.reduce((a, b) => a + b, 0) / catDocScores.length : null;
+          const catImpl = catImplScores.length > 0
+            ? catImplScores.reduce((a, b) => a + b, 0) / catImplScores.length : null;
+
+          const catDocEl = document.getElementById(`catDoc-${fnName}-${ci}`);
+          const catImplEl = document.getElementById(`catImpl-${fnName}-${ci}`);
+          if (catDocEl) {
+            catDocEl.textContent = formatScore(catDoc);
+            catDocEl.className = 'score-value ' + getScoreClass(catDoc);
+          }
+          if (catImplEl) {
+            catImplEl.textContent = formatScore(catImpl);
+            catImplEl.className = 'score-value ' + getScoreClass(catImpl);
+          }
+        }
+      }
+    }
+
+    function updateSelectStyle(sel, value) {
+      sel.className = 'maturity-select';
+      if (value === '0') sel.classList.add('score-na');
+      else sel.classList.add('score-' + value);
+    }
+
+    function buildMaturitySelect(reqId, type) {
+      const current = (scores[reqId] && scores[reqId][type]) || '0';
+      const scoreClass = current === '0' ? 'score-na' : 'score-' + current;
+      let opts = MATURITY_OPTIONS.map(o =>
+        `<option value="${o.value}"${o.value === current ? ' selected' : ''}>${o.label}</option>`
+      ).join('');
+      return `<select class="maturity-select ${scoreClass}" id="${type}-${reqId}" onchange="setScore('${reqId}','${type}',this.value)">${opts}</select>`;
+    }
+
+    function setLevel(level) {
+      selectedLevel = level;
+      try { localStorage.setItem('cyfun2025_level', level); } catch(e) {}
+      saveToServer();
+      document.querySelectorAll('.level-btn').forEach(btn => {
+        const btnLevel = btn.dataset.level;
+        const btnValue = LEVEL_HIERARCHY[btnLevel];
+        const selectedValue = LEVEL_HIERARCHY[level];
+        btn.classList.toggle('active', btnValue <= selectedValue);
+      });
+      applyFilters();
+      renderStats();
+    }
+
+    function updateCounts() {
+      if (!data) return;
+      let counts = { Basic: 0, Important: 0, Essential: 0 };
+      for (const [fn, categories] of Object.entries(data.functions)) {
+        for (const cat of categories) {
+          for (const sub of cat.subcategories) {
+            for (const req of sub.requirements) {
+              if (counts[req.assurance_level] !== undefined) {
+                counts[req.assurance_level]++;
+              }
+            }
+          }
+        }
+      }
+      document.getElementById('countBasic').textContent = counts.Basic + ' controls';
+      document.getElementById('countImportant').textContent = counts.Important + ' controls';
+      document.getElementById('countEssential').textContent = counts.Essential + ' controls';
+
+      // Count key measures
+      let kmCount = 0;
+      for (const [fn, categories] of Object.entries(data.functions)) {
+        for (const cat of categories) {
+          for (const sub of cat.subcategories) {
+            for (const req of sub.requirements) {
+              if (req.key_measure) kmCount++;
+            }
+          }
+        }
+      }
+      document.getElementById('countKM').textContent = kmCount + ' controls';
+    }
+
+    function getVisibleCount(fnName) {
+      let count = 0;
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel];
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      for (const cat of data.functions[fnName]) {
+        for (const sub of cat.subcategories) {
+          const subCode = (sub.code || '').toLowerCase();
+          const subDesc = (sub.description || '').toLowerCase();
+          for (const req of sub.requirements) {
+            const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+            if (reqLevel > maxLevel) continue;
+            if (keyMeasuresOnly && !req.key_measure) continue;
+            if (searchTerm && !req.requirement.toLowerCase().includes(searchTerm)
+                && !subCode.includes(searchTerm)
+                && !subDesc.includes(searchTerm)) continue;
+            count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function toggleKeyMeasures() {
+      keyMeasuresOnly = !keyMeasuresOnly;
+      document.getElementById('kmToggle').classList.toggle('active', keyMeasuresOnly);
+      applyFilters();
+      renderStats();
+    }
+
+    function renderStats() {
+      if (!data) return;
+      const bar = document.getElementById('statsBar');
+      let totalVisible = 0;
+      let html = '';
+      const fnNames = Object.keys(data.functions);
+      for (const fn of fnNames) {
+        const count = getVisibleCount(fn);
+        totalVisible += count;
+        html += `<div class="stat-card" style="border-left-color:${FN_COLORS[fn]}">
+          <div class="stat-value" style="color:${FN_COLORS[fn]}">${count}</div>
+          <div class="stat-label">${fn}</div>
+        </div>`;
+      }
+      html = `<div class="stat-card" style="border-left-color:var(--accent)">
+        <div class="stat-value" style="color:var(--accent)">${totalVisible}</div>
+        <div class="stat-label">Total Controls</div>
+      </div>` + html;
+      bar.innerHTML = html;
+    }
+
+    function renderFunctions() {
+      if (!data) return;
+      const main = document.getElementById('mainContent');
+      let html = '';
+
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        const color = FN_COLORS[fnName];
+        const abbr = fnName.substring(0, 3);
+
+        html += `<div class="function-section" data-function="${fnName}">
+          <div class="function-header" style="border-left-color:${color}" onclick="toggleFunction(this)">
+            <div class="fn-icon" style="background:${color}">${abbr}</div>
+            <div class="fn-title">${fnName}</div>
+            <div class="fn-count" id="fnCount-${fnName}"></div>
+            <div class="chevron">▾</div>
+          </div>
+          <div class="function-body" id="fnBody-${fnName}">`;
+
+        for (let ci = 0; ci < categories.length; ci++) {
+          const cat = categories[ci];
+          // Extract short name from category
+          const catName = cat.name.split(':')[0] || cat.name;
+          const catDesc = cat.name.includes(':') ? cat.name.split(':').slice(1).join(':').trim() : '';
+
+          html += `<div class="category" data-category="${ci}">
+            <div class="category-header" onclick="toggleCategory(this)">
+              <div class="chevron-sm">▾</div>
+              <div class="cat-name" title="${escapeHtml(catDesc)}">${escapeHtml(catName)}</div>
+              <div class="cat-scores">
+                <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="catDoc-${fnName}-${ci}">-</span></div>
+                <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="catImpl-${fnName}-${ci}">-</span></div>
+              </div>
+              <div class="cat-count" id="catCount-${fnName}-${ci}"></div>
+            </div>
+            <div class="category-body" id="catBody-${fnName}-${ci}">`;
+
+          for (let si = 0; si < cat.subcategories.length; si++) {
+            const sub = cat.subcategories[si];
+            const subCode = sub.code || '';
+            const subDesc = sub.description || '';
+
+            html += `<div class="subcategory">
+              <div class="subcategory-header">
+                <div class="subcategory-info">
+                  <div class="subcategory-code">${escapeHtml(subCode)}</div>
+                  ${subDesc ? `<div class="subcategory-desc">${escapeHtml(subDesc)}</div>` : ''}
+                </div>
+                <div class="score-pills">
+                  <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="subDoc-${fnName}-${ci}-${si}">-</span></div>
+                  <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="subImpl-${fnName}-${ci}-${si}">-</span></div>
+                </div>
+              </div>`;
+
+          for (let ri = 0; ri < sub.requirements.length; ri++) {
+              const req = sub.requirements[ri];
+              const level = req.assurance_level;
+              const reqId = `${fnName}-${ci}-${cat.subcategories.indexOf(sub)}-${ri}`;
+              html += `<div class="requirement level-${level}" data-level="${level}" data-km="${req.key_measure ? '1' : '0'}">
+                <span class="badge">${level}</span>
+                ${req.key_measure ? '<span class="key-measure">★ KM</span>' : ''}
+                <span class="req-text">${escapeHtml(req.requirement)}</span>
+                <div class="maturity-selectors">
+                  <div class="maturity-group">
+                    <label>Doc</label>
+                    ${buildMaturitySelect(reqId, 'doc')}
+                  </div>
+                  <div class="maturity-group">
+                    <label>Impl</label>
+                    ${buildMaturitySelect(reqId, 'impl')}
+                  </div>
+                </div>
+                <span class="search-only">${escapeHtml(subCode)} ${escapeHtml(subDesc)}</span>
+              </div>`;
+            }
+            html += `</div>`;
+          }
+
+          html += `</div></div>`;
+        }
+        html += `</div></div>`;
+      }
+      main.innerHTML = html;
+      applyFilters();
+      updateAllScores();
+    }
+
+    function applyFilters() {
+      if (!data) return;
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel];
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+      // Filter requirements
+      document.querySelectorAll('.requirement').forEach(el => {
+        const level = el.dataset.level;
+        const reqLevel = LEVEL_HIERARCHY[level] || 99;
+        const isKm = el.dataset.km === '1';
+        const text = el.textContent.toLowerCase();
+        const visible = reqLevel <= maxLevel
+          && (!keyMeasuresOnly || isKm)
+          && (!searchTerm || text.includes(searchTerm));
+        el.classList.toggle('filtered-out', !visible);
+      });
+
+      // Hide empty subcategories
+      document.querySelectorAll('.subcategory').forEach(el => {
+        const hasVisible = el.querySelector('.requirement:not(.filtered-out)');
+        el.classList.toggle('filtered-out', !hasVisible);
+      });
+
+      // Update counts and hide empty categories
+      for (const fnName of Object.keys(data.functions)) {
+        let fnTotal = 0;
+
+        for (let ci = 0; ci < data.functions[fnName].length; ci++) {
+          let catCount = 0;
+          const cat = data.functions[fnName][ci];
+          for (const sub of cat.subcategories) {
+            const subCode = (sub.code || '').toLowerCase();
+            const subDesc = (sub.description || '').toLowerCase();
+            for (const req of sub.requirements) {
+              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+              if (reqLevel > maxLevel) continue;
+              if (keyMeasuresOnly && !req.key_measure) continue;
+              if (searchTerm && !req.requirement.toLowerCase().includes(searchTerm)
+                  && !subCode.includes(searchTerm)
+                  && !subDesc.includes(searchTerm)) continue;
+              catCount++;
+            }
+          }
+          fnTotal += catCount;
+          const catEl = document.getElementById(`catCount-${fnName}-${ci}`);
+          if (catEl) catEl.textContent = `${catCount} controls`;
+
+          // Hide empty category
+          const catSection = catEl?.closest('.category');
+          if (catSection) catSection.classList.toggle('filtered-out', catCount === 0);
+        }
+
+        const fnCountEl = document.getElementById(`fnCount-${fnName}`);
+        if (fnCountEl) fnCountEl.textContent = `${fnTotal} controls`;
+
+        // Hide empty function section
+        const fnSection = fnCountEl?.closest('.function-section');
+        if (fnSection) fnSection.classList.toggle('filtered-out', fnTotal === 0);
+      }
+      renderStats();
+      updateAllScores();
+    }
+
+    function toggleFunction(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('hidden');
+    }
+
+    function toggleCategory(header) {
+      header.classList.toggle('collapsed');
+      const body = header.nextElementSibling;
+      body.classList.toggle('hidden');
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>

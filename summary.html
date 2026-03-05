@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyFun® 2025 — ESSENTIAL Summary</title>
+  <style>
+    :root {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --text-secondary: #5a5a7a;
+      --border: #e2e4e9;
+      --accent: #2563eb;
+      --accent-light: #dbeafe;
+      --govern: #6366f1;
+      --identify: #0891b2;
+      --protect: #059669;
+      --detect: #d97706;
+      --respond: #dc2626;
+      --recover: #7c3aed;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.5;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white; padding: 1.5rem 2rem; box-shadow: var(--shadow-md);
+    }
+    .header-inner {
+      max-width: 1400px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header h1 span { color: #60a5fa; }
+    .header-meta { font-size: 0.85rem; opacity: 0.7; }
+    .nav-links { display: flex; gap: 0.5rem; }
+    .nav-link {
+      color: #94a3b8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+      padding: 0.4rem 0.85rem; border-radius: 6px; transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
+    .nav-link.active { background: rgba(255,255,255,0.15); }
+
+    .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    /* Overall Maturity Card */
+    .maturity-overview {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;
+    }
+    .maturity-card {
+      background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow); text-align: center;
+    }
+    .maturity-card h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 0.75rem; }
+    .maturity-gauge {
+      position: relative; width: 140px; height: 140px; margin: 0 auto 0.75rem;
+    }
+    .maturity-gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+    .gauge-bg { fill: none; stroke: #e5e7eb; stroke-width: 10; }
+    .gauge-fill { fill: none; stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.6s ease; }
+    .gauge-text {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-size: 2rem; font-weight: 800; line-height: 1;
+    }
+    .gauge-sub { font-size: 0.75rem; color: var(--text-secondary); }
+    .maturity-target { font-size: 0.9rem; color: var(--text-secondary); }
+    .maturity-target strong { color: var(--text); }
+
+    /* Thresholds card */
+    .thresholds { text-align: left; }
+    .thresholds h3 { text-align: center; }
+    .threshold-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .threshold-item:last-child { border-bottom: none; }
+    .threshold-check { font-size: 1.1rem; }
+    .threshold-check.pass { color: #059669; }
+    .threshold-check.fail { color: #dc2626; }
+
+    /* Section titles */
+    .section-title {
+      font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem;
+      padding-bottom: 0.5rem; border-bottom: 2px solid var(--border);
+    }
+
+    /* Category Table */
+    .cat-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 2rem;
+    }
+    .cat-table th {
+      background: #f8f9fb; text-align: left; padding: 0.65rem 1rem;
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--text-secondary); font-weight: 700; border-bottom: 2px solid var(--border);
+    }
+    .cat-table th.num { text-align: center; }
+    .cat-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+    .cat-table tr:last-child td { border-bottom: none; }
+    .cat-table td.num { text-align: center; font-weight: 700; font-size: 0.85rem; }
+    .cat-table .fn-row td {
+      background: #f8f9fb; font-weight: 700; font-size: 0.9rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .cat-table .fn-label { display: flex; align-items: center; gap: 0.5rem; }
+    .fn-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .score-cell {
+      display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+      font-weight: 700; font-size: 0.82rem; min-width: 38px; text-align: center;
+    }
+    .sc-1 { background: #fef2f2; color: #dc2626; }
+    .sc-2 { background: #fff7ed; color: #ea580c; }
+    .sc-3 { background: #fffbeb; color: #d97706; }
+    .sc-4 { background: #ecfdf5; color: #059669; }
+    .sc-5 { background: #eff6ff; color: #2563eb; }
+    .sc-na { background: #f3f4f6; color: #9ca3af; }
+
+    /* Key Measures Table */
+    .km-table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+      overflow: hidden; margin-bottom: 2rem;
+    }
+    .km-table th {
+      background: #f8f9fb; text-align: left; padding: 0.6rem 0.75rem;
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--text-secondary); font-weight: 700; border-bottom: 2px solid var(--border);
+    }
+    .km-table th.num { text-align: center; width: 55px; }
+    .km-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; vertical-align: top; }
+    .km-table tr:last-child td { border-bottom: none; }
+    .km-table td.num { text-align: center; }
+    .km-code { font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .km-table .cat-row td {
+      background: #f8f9fb; font-weight: 700; font-size: 0.85rem;
+      border-bottom: 2px solid var(--border); color: var(--text);
+    }
+    .km-cat-label { display: flex; align-items: center; gap: 0.5rem; }
+
+    @media (max-width: 768px) {
+      .maturity-overview { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.2rem; }
+    }
+    @media print {
+      .header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <div>
+        <h1><span>CyFun®</span> 2025 — <span id="headerLevel">ESSENTIAL</span> Summary</h1>
+        <div class="header-meta">Assurance Level: <strong id="currentLevel">Essential</strong></div>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Controls</a>
+        <a href="summary.html" class="nav-link active">Summary</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="maturity-overview">
+      <div class="maturity-card">
+        <h3>Total Maturity Level</h3>
+        <div class="maturity-gauge">
+          <svg viewBox="0 0 100 100">
+            <circle class="gauge-bg" cx="50" cy="50" r="42" />
+            <circle class="gauge-fill" id="gaugeFill" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9" stroke-dashoffset="263.9" />
+          </svg>
+          <div class="gauge-text" id="gaugeValue">-</div>
+        </div>
+        <div class="maturity-target">Target: <strong id="gaugeTarget">-</strong></div>
+      </div>
+      <div class="maturity-card thresholds">
+        <h3><span id="thresholdLevel">ESSENTIAL</span> Thresholds</h3>
+        <div id="thresholdsList"></div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Category Maturity Scores</h2>
+    <table class="cat-table">
+      <thead>
+        <tr>
+          <th style="width:40%">Category</th>
+          <th class="num">Target</th>
+          <th class="num">Doc Score</th>
+          <th class="num">Impl Score</th>
+          <th class="num">Category Score</th>
+        </tr>
+      </thead>
+      <tbody id="catTableBody"></tbody>
+    </table>
+
+    <h2 class="section-title">Key Measures</h2>
+    <table class="km-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Requirement</th>
+          <th class="num">Target</th>
+          <th class="num">Doc</th>
+          <th class="num">Impl</th>
+          <th class="num">KM Score</th>
+        </tr>
+      </thead>
+      <tbody id="kmTableBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let data = null;
+    let scores = {};
+    let selectedLevel = 'Essential';
+    const STORAGE_KEY = 'cyfun2025_scores';
+    const LEVEL_HIERARCHY = { 'Basic': 1, 'Important': 2, 'Essential': 3 };
+    const FN_COLORS = {
+      GOVERN: '#6366f1', IDENTIFY: '#0891b2', PROTECT: '#059669',
+      DETECT: '#d97706', RESPOND: '#dc2626', RECOVER: '#7c3aed'
+    };
+    const LEVEL_TARGETS = {
+      Basic:     { total: 2.5, category: 2.5 },
+      Important: { total: 3,   category: 3 },
+      Essential: { total: 3.5, category: 3 }
+    };
+
+    fetch('data.json')
+      .then(r => r.json())
+      .then(d => { data = d; return init(); })
+      .catch(e => {
+        console.error('CyFun Summary error:', e);
+        document.getElementById('catTableBody').innerHTML =
+          `<tr><td colspan="5" style="color:#dc2626;padding:1rem">Error: ${e.message}</td></tr>`;
+      });
+
+    async function init() {
+      await loadSaved();
+      renderCategoryTable();
+      renderKeyMeasures();
+      renderOverview();
+      updateLevelIndicator();
+    }
+
+    async function loadSaved() {
+      // Try loading from server file first, fall back to localStorage
+      try {
+        const resp = await fetch('scores.json?_=' + Date.now());
+        if (resp.ok) {
+          const saved = await resp.json();
+          if (saved.scores) scores = saved.scores;
+          if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
+          return;
+        }
+      } catch(e) {}
+      // Fallback: localStorage
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) scores = JSON.parse(stored);
+      } catch(e) { scores = {}; }
+      try {
+        const stored = localStorage.getItem('cyfun2025_level');
+        if (stored && LEVEL_HIERARCHY[stored]) selectedLevel = stored;
+      } catch(e) {}
+    }
+
+    function updateLevelIndicator() {
+      const el = document.getElementById('currentLevel');
+      if (el) el.textContent = selectedLevel;
+      const h = document.getElementById('headerLevel');
+      if (h) h.textContent = selectedLevel.toUpperCase();
+      const t = document.getElementById('thresholdLevel');
+      if (t) t.textContent = selectedLevel.toUpperCase();
+      document.title = `CyFun® 2025 — ${selectedLevel.toUpperCase()} Summary`;
+    }
+
+    function effectiveScore(reqId, type) {
+      const s = scores[reqId] && scores[reqId][type];
+      if (!s || s === '0') return 1; // N/A = 1
+      return parseInt(s);
+    }
+
+    function scoreClass(val) {
+      if (val === null || val === undefined) return 'sc-na';
+      const r = Math.floor(val);
+      if (r < 1) return 'sc-na';
+      if (r > 5) return 'sc-5';
+      return 'sc-' + r;
+    }
+
+    function fmt(val) {
+      if (val === null || val === undefined) return '-';
+      return val % 1 === 0 ? val.toString() : val.toFixed(1);
+    }
+
+    function scoreHtml(val) {
+      return `<span class="score-cell ${scoreClass(val)}">${fmt(val)}</span>`;
+    }
+
+    // Build a lookup: reqCode -> reqId for key measures
+    function buildReqIdLookup() {
+      const lookup = {};
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        for (let ci = 0; ci < categories.length; ci++) {
+          const cat = categories[ci];
+          for (let si = 0; si < cat.subcategories.length; si++) {
+            const sub = cat.subcategories[si];
+            for (let ri = 0; ri < sub.requirements.length; ri++) {
+              const req = sub.requirements[ri];
+              // Extract code from requirement text (e.g. "PR.AA-01.1: ...")
+              const reqText = req.requirement;
+              const codeMatch = reqText.match(/^([A-Z]{2}\.[A-Z]{2}-[\d]+\.[\d]+)/);
+              if (codeMatch) {
+                lookup[codeMatch[1]] = `${fnName}-${ci}-${si}-${ri}`;
+              }
+              if (req.key_measure) {
+                // Also store by partial matching
+                lookup[`km-${fnName}-${ci}-${si}-${ri}`] = `${fnName}-${ci}-${si}-${ri}`;
+              }
+            }
+          }
+        }
+      }
+      return lookup;
+    }
+
+    // Get requirement data from a reqId like "PROTECT-0-1-3"
+    function getReqData(reqId) {
+      const parts = reqId.split('-');
+      const fnName = parts[0];
+      const ci = parseInt(parts[1], 10);
+      const si = parseInt(parts[2], 10);
+      const ri = parseInt(parts[3], 10);
+      try {
+        return data.functions[fnName][ci].subcategories[si].requirements[ri];
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // Check if a requirement is within the selected assurance level
+    function isReqInLevel(reqId) {
+      const req = getReqData(reqId);
+      if (!req) return false;
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel] || 3;
+      const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+      return reqLevel <= maxLevel;
+    }
+
+    // Find the reqId for a key measure code like "PR.AA-01.1"
+    function findReqId(kmCode) {
+      const clean = kmCode.replace(/\s+/g, '').replace(/:/g, '');
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        for (let ci = 0; ci < categories.length; ci++) {
+          const cat = categories[ci];
+          for (let si = 0; si < cat.subcategories.length; si++) {
+            const sub = cat.subcategories[si];
+            for (let ri = 0; ri < sub.requirements.length; ri++) {
+              const req = sub.requirements[ri];
+              const reqText = req.requirement.replace(/\s+/g, '');
+              if (reqText.startsWith(clean + ':') || reqText.startsWith(clean + '\t') || reqText.startsWith(clean)) {
+                return `${fnName}-${ci}-${si}-${ri}`;
+              }
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function computeCategoryScores() {
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel] || 3;
+      const result = [];
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        let fnDocScores = [];
+        let fnImplScores = [];
+        for (let ci = 0; ci < categories.length; ci++) {
+          const cat = categories[ci];
+          let catSubDocScores = [];
+          let catSubImplScores = [];
+          for (let si = 0; si < cat.subcategories.length; si++) {
+            const sub = cat.subcategories[si];
+            let subDoc = [], subImpl = [];
+            for (let ri = 0; ri < sub.requirements.length; ri++) {
+              const req = sub.requirements[ri];
+              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+              if (reqLevel > maxLevel) continue;
+              const reqId = `${fnName}-${ci}-${si}-${ri}`;
+              subDoc.push(effectiveScore(reqId, 'doc'));
+              subImpl.push(effectiveScore(reqId, 'impl'));
+            }
+            if (subDoc.length > 0) catSubDocScores.push(Math.min(...subDoc));
+            if (subImpl.length > 0) catSubImplScores.push(Math.min(...subImpl));
+          }
+          const docAvg = catSubDocScores.length > 0
+            ? catSubDocScores.reduce((a,b) => a+b, 0) / catSubDocScores.length : null;
+          const implAvg = catSubImplScores.length > 0
+            ? catSubImplScores.reduce((a,b) => a+b, 0) / catSubImplScores.length : null;
+          const catScore = (docAvg !== null && implAvg !== null)
+            ? Math.min(docAvg, implAvg) : (docAvg || implAvg || null);
+
+          // Find matching summary entry for target
+          const summaryEntry = data.summary.find(s => {
+            const catShort = cat.name.split(':')[0].trim();
+            return s.category.includes(catShort.split('(')[1]?.replace(')', '').trim() || catShort);
+          });
+          const target = summaryEntry ? summaryEntry.target_maturity : 3;
+
+          result.push({
+            function: fnName,
+            category: cat.name.split(':')[0].trim(),
+            target, docAvg, implAvg, catScore
+          });
+          if (docAvg !== null) fnDocScores.push(docAvg);
+          if (implAvg !== null) fnImplScores.push(implAvg);
+        }
+      }
+      return result;
+    }
+
+    function renderCategoryTable() {
+      const catScores = computeCategoryScores();
+      const tbody = document.getElementById('catTableBody');
+      let html = '';
+      let currentFn = '';
+
+      for (const row of catScores) {
+        if (row.function !== currentFn) {
+          currentFn = row.function;
+          const color = FN_COLORS[currentFn] || '#666';
+          html += `<tr class="fn-row">
+            <td colspan="5"><div class="fn-label"><span class="fn-dot" style="background:${color}"></span>${currentFn}</div></td>
+          </tr>`;
+        }
+        html += `<tr>
+          <td style="padding-left:2.5rem">${escapeHtml(row.category)}</td>
+          <td class="num">${scoreHtml(row.target)}</td>
+          <td class="num">${scoreHtml(row.docAvg)}</td>
+          <td class="num">${scoreHtml(row.implAvg)}</td>
+          <td class="num">${scoreHtml(row.catScore)}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+
+    // Extract category code from KM code, e.g. "PR.AA" from "PR.AA-01.1"
+    function kmCategoryCode(kmCode) {
+      const m = kmCode.match(/^([A-Z]{2}\.[A-Z]{2})/);
+      return m ? m[1] : '';
+    }
+
+    // Find category name that contains a given code like "(PR.AA)"
+    function findCategoryName(catCode) {
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        for (const cat of categories) {
+          if (cat.name.includes('(' + catCode + ')')) {
+            // Return short name, e.g. "Identity Management, Authentication, and Access Control (PR.AA)"
+            return { name: cat.name.split(':')[0].trim(), fn: fnName };
+          }
+        }
+      }
+      return { name: catCode, fn: '' };
+    }
+
+    function renderKeyMeasures() {
+      const tbody = document.getElementById('kmTableBody');
+      if (!data.key_measures || data.key_measures.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:1rem;color:var(--text-secondary)">No key measures found.</td></tr>';
+        return;
+      }
+
+      // Group KMs by function
+      const groups = {};
+      for (const km of data.key_measures) {
+        const catCode = kmCategoryCode(km.code);
+        const catInfo = findCategoryName(catCode);
+        const fn = catInfo.fn || 'OTHER';
+        if (!groups[fn]) groups[fn] = [];
+        groups[fn].push(km);
+      }
+
+      let html = '';
+      // Render in standard function order
+      const fnOrder = ['GOVERN', 'IDENTIFY', 'PROTECT', 'DETECT', 'RESPOND', 'RECOVER'];
+      for (const fn of fnOrder) {
+        if (!groups[fn]) continue;
+        const color = FN_COLORS[fn] || '#666';
+        let groupHtml = '';
+        for (const km of groups[fn]) {
+          const reqId = findReqId(km.code);
+          if (!reqId || !isReqInLevel(reqId)) continue;
+          const doc = effectiveScore(reqId, 'doc');
+          const impl = effectiveScore(reqId, 'impl');
+          const kmScore = Math.min(doc, impl);
+          groupHtml += `<tr>
+            <td class="km-code">${escapeHtml(km.code)}</td>
+            <td>${escapeHtml(km.description)}</td>
+            <td class="num">${scoreHtml(km.target_maturity)}</td>
+            <td class="num">${scoreHtml(doc)}</td>
+            <td class="num">${scoreHtml(impl)}</td>
+            <td class="num">${scoreHtml(kmScore)}</td>
+          </tr>`;
+        }
+        if (groupHtml) {
+          html += `<tr class="cat-row">
+            <td colspan="6"><div class="km-cat-label"><span class="fn-dot" style="background:${color}"></span>${fn}</div></td>
+          </tr>`;
+          html += groupHtml;
+        }
+      }
+      if (!html) {
+        tbody.innerHTML = '<tr><td colspan="6" style="padding:1rem;color:var(--text-secondary)">No key measures for the selected assurance level.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = html;
+    }
+
+    function renderOverview() {
+      const targets = LEVEL_TARGETS[selectedLevel] || LEVEL_TARGETS.Essential;
+      const catScores = computeCategoryScores();
+      const allScores = catScores.filter(c => c.catScore !== null).map(c => c.catScore);
+      const totalMaturity = allScores.length > 0
+        ? allScores.reduce((a,b) => a+b, 0) / allScores.length : null;
+
+      // Gauge
+      const gaugeVal = document.getElementById('gaugeValue');
+      const gaugeFill = document.getElementById('gaugeFill');
+      const gaugeTarget = document.getElementById('gaugeTarget');
+      gaugeVal.textContent = fmt(totalMaturity);
+      gaugeTarget.textContent = `≥ ${fmt(targets.total)} / 5`;
+
+      if (totalMaturity !== null) {
+        const pct = Math.min(totalMaturity / 5, 1);
+        const circumference = 2 * Math.PI * 42;
+        const offset = circumference * (1 - pct);
+        const color = totalMaturity >= targets.total ? '#059669' : totalMaturity >= targets.total * 0.7 ? '#d97706' : '#dc2626';
+        gaugeFill.style.stroke = color;
+        gaugeFill.style.strokeDashoffset = offset;
+        gaugeVal.style.color = color;
+      }
+
+      // Thresholds
+      const thresholds = document.getElementById('thresholdsList');
+
+      // KM threshold: each KM score >= category target
+      let kmPass = true;
+      let kmCount = 0;
+      let kmFail = 0;
+      for (const km of (data.key_measures || [])) {
+        const reqId = findReqId(km.code);
+        if (!reqId || !isReqInLevel(reqId)) continue;
+        kmCount++;
+        const doc = effectiveScore(reqId, 'doc');
+        const impl = effectiveScore(reqId, 'impl');
+        if (Math.min(doc, impl) < targets.category) { kmPass = false; kmFail++; }
+      }
+
+      // Category threshold: each category >= category target
+      let catPass = true;
+      let catFail = 0;
+      for (const c of catScores) {
+        if (c.catScore !== null && c.catScore < targets.category) { catPass = false; catFail++; }
+      }
+
+      // Total threshold: average >= total target
+      const totalPass = totalMaturity !== null && totalMaturity >= targets.total;
+
+      thresholds.innerHTML = `
+        <div class="threshold-item">
+          <span>Each Key Measure maturity ≥ ${fmt(targets.category)}/5</span>
+          <span class="threshold-check ${kmPass ? 'pass' : 'fail'}">${kmPass ? '✓' : `✗ (${kmFail} below)`}</span>
+        </div>
+        <div class="threshold-item">
+          <span>Each Category maturity ≥ ${fmt(targets.category)}/5</span>
+          <span class="threshold-check ${catPass ? 'pass' : 'fail'}">${catPass ? '✓' : `✗ (${catFail} below)`}</span>
+        </div>
+        <div class="threshold-item">
+          <span>Total maturity average ≥ ${fmt(targets.total)}/5</span>
+          <span class="threshold-check ${totalPass ? 'pass' : 'fail'}">${totalPass ? '✓' : '✗'}</span>
+        </div>
+      `;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
