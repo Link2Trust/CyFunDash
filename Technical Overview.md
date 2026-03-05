@@ -51,16 +51,16 @@ The project is a single-page-style web dashboard consisting of 5 files (plus one
 # Component Interactions
 
 Excel file ──[parse_excel.py]──► data.json (static, one-time)
-                                     │
-                                     ▼
-            ┌──────────── GET /data.json ────────────┐
-            │                                        │
-       index.html                              summary.html
-       (Controls)                              (Summary)
-            │                                        │
-            ├── GET /scores.json (on load) ◄─────────┤
-            ├── POST /save (on every change) ──► server.py ──► scores.json
-            └── localStorage (fallback r/w) ─────────┘
+                                   │
+                                   ▼
+          ┌──────────── GET /data.json ────────────┐
+          │                                        │
+     index.html                              summary.html
+     (Controls)                              (Summary)
+          │                                        │
+          ├── GET /scores.json (on load) ◄─────────┤
+          ├── POST /save (on every change) ──► server.py ──► scores.json
+          └── localStorage (fallback r/w) ─────────┘
 
 - Data flow: parse_excel.py is run once to generate data.json. Both pages fetch data.json at startup for the control hierarchy and metadata.
 - State sharing: The Controls page writes scores + level to both localStorage and POST /save. The Summary page reads from scores.json (with ?_=timestamp cache-bust) on load, falling back to localStorage. There is no live sync between the two pages — the Summary page reflects whatever was last saved when it was loaded.
