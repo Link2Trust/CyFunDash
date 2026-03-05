@@ -85,3 +85,7 @@ cyfundash/
 
 ### Key Measures selection
 <img width="1235" height="904" alt="image" src="https://github.com/user-attachments/assets/31ed649e-dff7-49ba-ba17-27c4066bf5b6" />
+
+### Result Page
+<img width="1241" height="1054" alt="image" src="https://github.com/user-attachments/assets/2d9a6468-6ce2-47ae-b34f-872f50f0ff2c" />
+
