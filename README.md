@@ -77,3 +77,11 @@ cyfundash/
 - The assurance level selector is **cumulative** — selecting "Important" includes both Basic and Important controls.
 - Scores and the selected assurance level are shared between the Controls and Summary pages via `scores.json`.
 - Re-run `python3 parse_excel.py` if the source Excel file is updated.
+
+## Screenshots
+
+### All Assurance Levels
+<img width="1255" height="1035" alt="image" src="https://github.com/user-attachments/assets/d02140db-188a-4863-843b-bb0d18f6ddbb" />
+
+### Key Measures selection
+<img width="1235" height="904" alt="image" src="https://github.com/user-attachments/assets/31ed649e-dff7-49ba-ba17-27c4066bf5b6" />
