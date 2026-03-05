@@ -5,23 +5,23 @@ The project is a single-page-style web dashboard consisting of 5 files (plus one
 **1. parse_excel.py** — Data Extraction Pipeline
 - Responsibility: Offline ETL script that reads the CyFun2025 Excel workbook and produces data.json.
 - Key functions:
-		◦  parse_function_sheet(ws, sheet_name) — Iterates rows of the 6 NIST CSF function sheets (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), extracting a hierarchy of categories → subcategories → requirements. Detects key measures via "Key Measure" text in column C.
-		◦  parse_summary(wb) — Reads the "ESSENTIAL Summary" sheet for category target maturities and the 29 key measures from 3 column groups (L-N, S-U, Z-AB). Uses a regex pattern (^[A-Z]{2}\.[A-Z]{2}-\d) to filter header rows from actual KM codes.
-		◦  parse_maturity_levels(wb) — Extracts the 5 maturity level definitions with documentation/implementation descriptions.
-	•  Dependency: openpyxl
-	•  Output: data.json (~111 KB) — a flat JSON structure with functions, summary, key_measures, maturity_levels, statistics, and assurance_levels.
+	- parse_function_sheet(ws, sheet_name) — Iterates rows of the 6 NIST CSF function sheets (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), extracting a hierarchy of categories → subcategories → requirements. Detects key measures via "Key Measure" text in column C.0
+	- parse_summary(wb) — Reads the "ESSENTIAL Summary" sheet for category target maturities and the 29 key measures from 3 column groups (L-N, S-U, Z-AB). Uses a regex pattern (^[A-Z]{2}\.[A-Z]{2}-\d) to filter header rows from actual KM codes.
+	- parse_maturity_levels(wb) — Extracts the 5 maturity level definitions with documentation/implementation descriptions.
+- Dependency: openpyxl
+- Output: data.json (~111 KB) — a flat JSON structure with functions, summary, key_measures, maturity_levels, statistics, and assurance_levels.
 
 **2. index.html** — Controls Page
-	•  Responsibility: Interactive assessment interface where users assign maturity scores per control.
-	•  Key JS functions:
-		◦  init() (async) — Bootstraps the page: loads saved scores, renders stats/functions, restores assurance level.
-		◦  loadScores() (async) — Loads state from scores.json (server file) first, falls back to localStorage.
-		◦  saveScores() / saveToServer() — Dual-write to localStorage + debounced POST /save (500ms).
-		◦  setScore(reqId, type, value) — Updates a single doc/impl score, persists, re-renders.
-		◦  updateAllScores() — Recalculates all subcategory (min) and category (average) scores, updating DOM elements.
-		◦  applyFilters() — Applies assurance level, key-measures-only, and search text filters; hides non-matching controls via CSS class toggling.
-		◦  renderFunctions() — Builds the full DOM tree: collapsible function sections → categories → subcategories → requirement rows with maturity dropdowns.
-	•  reqId convention: "FUNCTION-catIdx-subIdx-reqIdx" (e.g. "GOVERN-0-1-3") used as the universal key for scores.
+- Responsibility: Interactive assessment interface where users assign maturity scores per control.
+- Key JS functions:
+	- init() (async) — Bootstraps the page: loads saved scores, renders stats/functions, restores assurance level.
+	- loadScores() (async) — Loads state from scores.json (server file) first, falls back to localStorage.
+	- saveScores() / saveToServer() — Dual-write to localStorage + debounced POST /save (500ms).
+	- setScore(reqId, type, value) — Updates a single doc/impl score, persists, re-renders.
+	- updateAllScores() — Recalculates all subcategory (min) and category (average) scores, updating DOM elements.
+	- applyFilters() — Applies assurance level, key-measures-only, and search text filters; hides non-matching controls via CSS class toggling.
+	- renderFunctions() — Builds the full DOM tree: collapsible function sections → categories → subcategories → requirement rows with maturity dropdowns.
+- reqId convention: "FUNCTION-catIdx-subIdx-reqIdx" (e.g. "GOVERN-0-1-3") used as the universal key for scores.
 
 **3. summary.html** — Summary/Dashboard Page
 	•  Responsibility: Read-only dashboard showing aggregate maturity scores, threshold compliance, and key measure status.
