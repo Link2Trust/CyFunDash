@@ -2,7 +2,7 @@
 
 A web-based self-assessment tool for the **CyFun® 2025 CyberFundamentals** framework. It parses the official Excel workbook and provides an interactive dashboard to assign maturity scores per control and track compliance against assurance level thresholds.
 
-## <span style="color:green">Features</span>
+## Features
 
 - **Controls page** — Browse all requirements across the 6 NIST CSF functions (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), filter by assurance level (Basic/Important/Essential), toggle key measures only, and search.
 - **Maturity scoring** — Assign Documentation and Implementation maturity levels (N/A, 1–5) per control. Subcategory scores (min), category scores (average), and overall maturity are calculated automatically.
