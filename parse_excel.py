@@ -41,7 +41,7 @@ def _build_requirement(col_c, col_e, col_f):
     }
 
 
-def parse_function_sheet(ws, sheet_name):
+def parse_function_sheet(ws):
     """Parse a function sheet (GOVERN, IDENTIFY, etc.) and return structured data."""
     categories = []
     current_category = None
@@ -204,7 +204,7 @@ def main():
     for sheet_name in FUNCTION_SHEETS:
         print(f"  Parsing {sheet_name}...")
         ws = wb[sheet_name]
-        data["functions"][sheet_name] = parse_function_sheet(ws, sheet_name)
+        data["functions"][sheet_name] = parse_function_sheet(ws)
 
     stats = _compute_statistics(data["functions"])
     data["statistics"] = stats

@@ -81,8 +81,8 @@
       color: #94a3b8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
       padding: 0.4rem 0.85rem; border-radius: 6px; transition: all 0.15s;
     }
-    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
-    .nav-link.active { background: rgba(255,255,255,0.15); }
+    .nav-link:hover, .nav-link.active { color: white; background: #3e495c; }
+    .nav-link.active { background: #485365; }
 
     /* Assurance Level Selector */
     .level-selector {
@@ -348,11 +348,11 @@
       text-align: center;
       line-height: 1.4;
     }
-    .score-pill .score-value.s-na { background: #f3f4f6; color: #9ca3af; }
-    .score-pill .score-value.s-1 { background: #fef2f2; color: #dc2626; }
-    .score-pill .score-value.s-2 { background: #fff7ed; color: #ea580c; }
-    .score-pill .score-value.s-3 { background: #fffbeb; color: #d97706; }
-    .score-pill .score-value.s-4 { background: #ecfdf5; color: #059669; }
+    .score-pill .score-value.s-na { background: #f3f4f6; color: #6b7280; }
+    .score-pill .score-value.s-1 { background: #fef2f2; color: #b91c1c; }
+    .score-pill .score-value.s-2 { background: #fff7ed; color: #c2410c; }
+    .score-pill .score-value.s-3 { background: #fffbeb; color: #b45309; }
+    .score-pill .score-value.s-4 { background: #ecfdf5; color: #047857; }
     .score-pill .score-value.s-5 { background: #eff6ff; color: #2563eb; }
 
     /* Category scores */
@@ -463,11 +463,11 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent-light);
     }
-    .maturity-select.score-na { background: #f3f4f6; color: #9ca3af; }
-    .maturity-select.score-1 { background: #fef2f2; color: #dc2626; }
-    .maturity-select.score-2 { background: #fff7ed; color: #ea580c; }
-    .maturity-select.score-3 { background: #fffbeb; color: #d97706; }
-    .maturity-select.score-4 { background: #ecfdf5; color: #059669; }
+    .maturity-select.score-na { background: #f3f4f6; color: #6b7280; }
+    .maturity-select.score-1 { background: #fef2f2; color: #b91c1c; }
+    .maturity-select.score-2 { background: #fff7ed; color: #c2410c; }
+    .maturity-select.score-3 { background: #fffbeb; color: #b45309; }
+    .maturity-select.score-4 { background: #ecfdf5; color: #047857; }
     .maturity-select.score-5 { background: #eff6ff; color: #2563eb; }
 
     .requirement.filtered-out,
@@ -622,13 +622,15 @@
     };
 
     // Load data
-    fetch('data.json')
-      .then(r => r.json())
-      .then(d => { data = d; return init(); })
-      .catch(e => {
+    (async () => {
+      try {
+        data = await (await fetch('data.json')).json();
+        await init();
+      } catch (e) {
         document.getElementById('mainContent').innerHTML =
           '<p style="padding:2rem;color:#dc2626">Error loading data. Run <code>python3 parse_excel.py</code> first.</p>';
-      });
+      }
+    })();
 
     async function init() {
       await loadScores();
@@ -921,7 +923,7 @@
       const catName = cat.name.split(':')[0] || cat.name;
       const catDesc = cat.name.includes(':') ? cat.name.split(':').slice(1).join(':').trim() : '';
       let html = `<div class="category" data-category="${ci}">
-            <div class="category-header" onclick="toggleCategory(this)">
+            <div class="category-header" onclick="toggleSection(this)">
               <div class="chevron-sm">▾</div>
               <div class="cat-name" title="${escapeHtml(catDesc)}">${escapeHtml(catName)}</div>
               <div class="cat-scores">
@@ -947,7 +949,7 @@
         const color = FN_COLORS[fnName];
         const abbr = fnName.substring(0, 3);
         html += `<div class="function-section" data-function="${fnName}">
-          <div class="function-header" style="border-left-color:${color}" onclick="toggleFunction(this)">
+          <div class="function-header" style="border-left-color:${color}" onclick="toggleSection(this)">
             <div class="fn-icon" style="background:${color}">${abbr}</div>
             <div class="fn-title">${fnName}</div>
             <div class="fn-count" id="fnCount-${fnName}"></div>
@@ -1007,16 +1009,9 @@
       updateAllScores();
     }
 
-    function toggleFunction(header) {
+    function toggleSection(header) {
       header.classList.toggle('collapsed');
-      const body = header.nextElementSibling;
-      body.classList.toggle('hidden');
-    }
-
-    function toggleCategory(header) {
-      header.classList.toggle('collapsed');
-      const body = header.nextElementSibling;
-      body.classList.toggle('hidden');
+      header.nextElementSibling.classList.toggle('hidden');
     }
 
     function escapeHtml(str) {

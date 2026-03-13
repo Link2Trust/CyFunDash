@@ -46,8 +46,8 @@
       color: #94a3b8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
       padding: 0.4rem 0.85rem; border-radius: 6px; transition: all 0.15s;
     }
-    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
-    .nav-link.active { background: rgba(255,255,255,0.15); }
+    .nav-link:hover, .nav-link.active { color: white; background: #3e495c; }
+    .nav-link.active { background: #485365; }
 
     .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
 
@@ -118,12 +118,12 @@
       display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
       font-weight: 700; font-size: 0.82rem; min-width: 38px; text-align: center;
     }
-    .sc-1 { background: #fef2f2; color: #dc2626; }
-    .sc-2 { background: #fff7ed; color: #ea580c; }
-    .sc-3 { background: #fffbeb; color: #d97706; }
-    .sc-4 { background: #ecfdf5; color: #059669; }
+    .sc-1 { background: #fef2f2; color: #b91c1c; }
+    .sc-2 { background: #fff7ed; color: #c2410c; }
+    .sc-3 { background: #fffbeb; color: #b45309; }
+    .sc-4 { background: #ecfdf5; color: #047857; }
     .sc-5 { background: #eff6ff; color: #2563eb; }
-    .sc-na { background: #f3f4f6; color: #9ca3af; }
+    .sc-na { background: #f3f4f6; color: #6b7280; }
 
     /* Key Measures Table */
     .km-table {
@@ -238,14 +238,16 @@
       Essential: { total: 3.5, category: 3 }
     };
 
-    fetch('data.json')
-      .then(r => r.json())
-      .then(d => { data = d; return init(); })
-      .catch(e => {
+    (async () => {
+      try {
+        data = await (await fetch('data.json')).json();
+        await init();
+      } catch (e) {
         console.error('CyFun Summary error:', e);
         document.getElementById('catTableBody').innerHTML =
           `<tr><td colspan="5" style="color:#dc2626;padding:1rem">Error: ${e.message}</td></tr>`;
-      });
+      }
+    })();
 
     async function init() {
       await loadSaved();
@@ -329,7 +331,7 @@
       const lookup = {};
       forEachRequirement((fnName, ci, si, ri, req) => {
         const reqId = `${fnName}-${ci}-${si}-${ri}`;
-        const codeMatch = req.requirement.match(/^([A-Z]{2}\.[A-Z]{2}-[\d]+\.[\d]+)/);
+        const codeMatch = req.requirement.match(/^([A-Z]{2}\.[A-Z]{2}-\d+\.\d+)/);
         if (codeMatch) lookup[codeMatch[1]] = reqId;
         if (req.key_measure) lookup[`km-${reqId}`] = reqId;
       });
@@ -543,7 +545,9 @@
       const pct = Math.min(totalMaturity / 5, 1);
       const circumference = 2 * Math.PI * 42;
       const offset = circumference * (1 - pct);
-      const color = totalMaturity >= targets.total ? '#059669' : totalMaturity >= targets.total * 0.7 ? '#d97706' : '#dc2626';
+      let color = '#dc2626';
+      if (totalMaturity >= targets.total) color = '#059669';
+      else if (totalMaturity >= targets.total * 0.7) color = '#d97706';
       gaugeFill.style.stroke = color;
       gaugeFill.style.strokeDashoffset = offset;
       gaugeVal.style.color = color;
