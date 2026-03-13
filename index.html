@@ -639,21 +639,21 @@
       setLevel(savedLevel && LEVEL_HIERARCHY[savedLevel] ? savedLevel : 'Essential');
     }
 
+    async function loadFromServer() {
+      const resp = await fetch('scores.json?_=' + Date.now());
+      if (!resp.ok) return false;
+      const saved = await resp.json();
+      if (saved.scores) scores = saved.scores;
+      if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
+      if (saved.level) try { localStorage.setItem('cyfun2025_level', saved.level); } catch(e) {}
+      return true;
+    }
+
     async function loadScores() {
-      // Try loading from server file first, fall back to localStorage
       try {
-        const resp = await fetch('scores.json?_=' + Date.now());
-        if (resp.ok) {
-          const saved = await resp.json();
-          if (saved.scores) scores = saved.scores;
-          if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
-          // Sync to localStorage
-          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
-          if (saved.level) try { localStorage.setItem('cyfun2025_level', saved.level); } catch(e) {}
-          return;
-        }
+        if (await loadFromServer()) return;
       } catch(e) {}
-      // Fallback: localStorage
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) scores = JSON.parse(stored);
@@ -709,68 +709,55 @@
       return val % 1 === 0 ? val.toString() : val.toFixed(1);
     }
 
+    function minOrNull(arr) {
+      return arr.length > 0 ? Math.min(...arr) : null;
+    }
+
+    function avgOrNull(arr) {
+      return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+    }
+
+    function collectSubScores(sub, fnName, ci, si, maxLevel) {
+      const doc = [], impl = [];
+      for (let ri = 0; ri < sub.requirements.length; ri++) {
+        const req = sub.requirements[ri];
+        const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+        if (reqLevel > maxLevel) continue;
+        if (keyMeasuresOnly && !req.key_measure) continue;
+        const reqId = `${fnName}-${ci}-${si}-${ri}`;
+        doc.push(effectiveScore(reqId, 'doc'));
+        impl.push(effectiveScore(reqId, 'impl'));
+      }
+      return { doc, impl };
+    }
+
+    function updateScoreDisplay(elementId, value) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.textContent = formatScore(value);
+      el.className = 'score-value ' + getScoreClass(value);
+    }
+
     function updateAllScores() {
       if (!data) return;
       const maxLevel = LEVEL_HIERARCHY[selectedLevel];
 
       for (const [fnName, categories] of Object.entries(data.functions)) {
         for (let ci = 0; ci < categories.length; ci++) {
-          const cat = categories[ci];
-          let catDocScores = [];
-          let catImplScores = [];
+          const catDocScores = [], catImplScores = [];
 
-          for (let si = 0; si < cat.subcategories.length; si++) {
-            const sub = cat.subcategories[si];
-            let subDocScores = [];
-            let subImplScores = [];
-
-            for (let ri = 0; ri < sub.requirements.length; ri++) {
-              const req = sub.requirements[ri];
-              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-              if (reqLevel > maxLevel) continue;
-              if (keyMeasuresOnly && !req.key_measure) continue;
-
-              const reqId = `${fnName}-${ci}-${si}-${ri}`;
-              subDocScores.push(effectiveScore(reqId, 'doc'));
-              subImplScores.push(effectiveScore(reqId, 'impl'));
-            }
-
-            // Subcategory score = minimum of requirement scores
-            const subDoc = subDocScores.length > 0 ? Math.min(...subDocScores) : null;
-            const subImpl = subImplScores.length > 0 ? Math.min(...subImplScores) : null;
-
-            // Update subcategory score display
-            const subDocEl = document.getElementById(`subDoc-${fnName}-${ci}-${si}`);
-            const subImplEl = document.getElementById(`subImpl-${fnName}-${ci}-${si}`);
-            if (subDocEl) {
-              subDocEl.textContent = formatScore(subDoc);
-              subDocEl.className = 'score-value ' + getScoreClass(subDoc);
-            }
-            if (subImplEl) {
-              subImplEl.textContent = formatScore(subImpl);
-              subImplEl.className = 'score-value ' + getScoreClass(subImpl);
-            }
-
+          for (let si = 0; si < categories[ci].subcategories.length; si++) {
+            const { doc, impl } = collectSubScores(categories[ci].subcategories[si], fnName, ci, si, maxLevel);
+            const subDoc = minOrNull(doc);
+            const subImpl = minOrNull(impl);
+            updateScoreDisplay(`subDoc-${fnName}-${ci}-${si}`, subDoc);
+            updateScoreDisplay(`subImpl-${fnName}-${ci}-${si}`, subImpl);
             if (subDoc !== null) catDocScores.push(subDoc);
             if (subImpl !== null) catImplScores.push(subImpl);
           }
 
-          // Category score = average of subcategory scores
-          const catDoc = catDocScores.length > 0
-            ? catDocScores.reduce((a, b) => a + b, 0) / catDocScores.length : null;
-          const catImpl = catImplScores.length > 0
-            ? catImplScores.reduce((a, b) => a + b, 0) / catImplScores.length : null;
-
-          const catDocEl = document.getElementById(`catDoc-${fnName}-${ci}`);
-          const catImplEl = document.getElementById(`catImpl-${fnName}-${ci}`);
-          if (catDocEl) {
-            catDocEl.textContent = formatScore(catDoc);
-            catDocEl.className = 'score-value ' + getScoreClass(catDoc);
-          }
-          if (catImplEl) {
-            catImplEl.textContent = formatScore(catImpl);
-            catImplEl.className = 'score-value ' + getScoreClass(catImpl);
-          }
+          updateScoreDisplay(`catDoc-${fnName}-${ci}`, avgOrNull(catDocScores));
+          updateScoreDisplay(`catImpl-${fnName}-${ci}`, avgOrNull(catImplScores));
         }
       }
     }
@@ -804,56 +791,58 @@
       renderStats();
     }
 
-    function updateCounts() {
-      if (!data) return;
-      let counts = { Basic: 0, Important: 0, Essential: 0 };
-      for (const [fn, categories] of Object.entries(data.functions)) {
-        for (const cat of categories) {
-          for (const sub of cat.subcategories) {
-            for (const req of sub.requirements) {
-              if (counts[req.assurance_level] !== undefined) {
-                counts[req.assurance_level]++;
-              }
-            }
-          }
-        }
-      }
-      document.getElementById('countBasic').textContent = counts.Basic + ' controls';
-      document.getElementById('countImportant').textContent = counts.Important + ' controls';
-      document.getElementById('countEssential').textContent = counts.Essential + ' controls';
-
-      // Count key measures
+    function countByLevel() {
+      const counts = { Basic: 0, Important: 0, Essential: 0 };
       let kmCount = 0;
-      for (const [fn, categories] of Object.entries(data.functions)) {
+      for (const categories of Object.values(data.functions)) {
         for (const cat of categories) {
           for (const sub of cat.subcategories) {
             for (const req of sub.requirements) {
+              if (counts[req.assurance_level] !== undefined) counts[req.assurance_level]++;
               if (req.key_measure) kmCount++;
             }
           }
         }
       }
+      return { counts, kmCount };
+    }
+
+    function updateCounts() {
+      if (!data) return;
+      const { counts, kmCount } = countByLevel();
+      document.getElementById('countBasic').textContent = counts.Basic + ' controls';
+      document.getElementById('countImportant').textContent = counts.Important + ' controls';
+      document.getElementById('countEssential').textContent = counts.Essential + ' controls';
       document.getElementById('countKM').textContent = kmCount + ' controls';
     }
 
-    function getVisibleCount(fnName) {
+    function matchesSearch(req, sub, searchTerm) {
+      if (!searchTerm) return true;
+      return req.requirement.toLowerCase().includes(searchTerm)
+          || (sub.code || '').toLowerCase().includes(searchTerm)
+          || (sub.description || '').toLowerCase().includes(searchTerm);
+    }
+
+    function countVisibleInCategory(cat, maxLevel, searchTerm) {
       let count = 0;
+      for (const sub of cat.subcategories) {
+        for (const req of sub.requirements) {
+          const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+          if (reqLevel > maxLevel) continue;
+          if (keyMeasuresOnly && !req.key_measure) continue;
+          if (!matchesSearch(req, sub, searchTerm)) continue;
+          count++;
+        }
+      }
+      return count;
+    }
+
+    function getVisibleCount(fnName) {
       const maxLevel = LEVEL_HIERARCHY[selectedLevel];
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      let count = 0;
       for (const cat of data.functions[fnName]) {
-        for (const sub of cat.subcategories) {
-          const subCode = (sub.code || '').toLowerCase();
-          const subDesc = (sub.description || '').toLowerCase();
-          for (const req of sub.requirements) {
-            const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-            if (reqLevel > maxLevel) continue;
-            if (keyMeasuresOnly && !req.key_measure) continue;
-            if (searchTerm && !req.requirement.toLowerCase().includes(searchTerm)
-                && !subCode.includes(searchTerm)
-                && !subDesc.includes(searchTerm)) continue;
-            count++;
-          }
-        }
+        count += countVisibleInCategory(cat, maxLevel, searchTerm);
       }
       return count;
     }
@@ -886,64 +875,10 @@
       bar.innerHTML = html;
     }
 
-    function renderFunctions() {
-      if (!data) return;
-      const main = document.getElementById('mainContent');
-      let html = '';
-
-      for (const [fnName, categories] of Object.entries(data.functions)) {
-        const color = FN_COLORS[fnName];
-        const abbr = fnName.substring(0, 3);
-
-        html += `<div class="function-section" data-function="${fnName}">
-          <div class="function-header" style="border-left-color:${color}" onclick="toggleFunction(this)">
-            <div class="fn-icon" style="background:${color}">${abbr}</div>
-            <div class="fn-title">${fnName}</div>
-            <div class="fn-count" id="fnCount-${fnName}"></div>
-            <div class="chevron">▾</div>
-          </div>
-          <div class="function-body" id="fnBody-${fnName}">`;
-
-        for (let ci = 0; ci < categories.length; ci++) {
-          const cat = categories[ci];
-          // Extract short name from category
-          const catName = cat.name.split(':')[0] || cat.name;
-          const catDesc = cat.name.includes(':') ? cat.name.split(':').slice(1).join(':').trim() : '';
-
-          html += `<div class="category" data-category="${ci}">
-            <div class="category-header" onclick="toggleCategory(this)">
-              <div class="chevron-sm">▾</div>
-              <div class="cat-name" title="${escapeHtml(catDesc)}">${escapeHtml(catName)}</div>
-              <div class="cat-scores">
-                <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="catDoc-${fnName}-${ci}">-</span></div>
-                <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="catImpl-${fnName}-${ci}">-</span></div>
-              </div>
-              <div class="cat-count" id="catCount-${fnName}-${ci}"></div>
-            </div>
-            <div class="category-body" id="catBody-${fnName}-${ci}">`;
-
-          for (let si = 0; si < cat.subcategories.length; si++) {
-            const sub = cat.subcategories[si];
-            const subCode = sub.code || '';
-            const subDesc = sub.description || '';
-
-            html += `<div class="subcategory">
-              <div class="subcategory-header">
-                <div class="subcategory-info">
-                  <div class="subcategory-code">${escapeHtml(subCode)}</div>
-                  ${subDesc ? `<div class="subcategory-desc">${escapeHtml(subDesc)}</div>` : ''}
-                </div>
-                <div class="score-pills">
-                  <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="subDoc-${fnName}-${ci}-${si}">-</span></div>
-                  <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="subImpl-${fnName}-${ci}-${si}">-</span></div>
-                </div>
-              </div>`;
-
-          for (let ri = 0; ri < sub.requirements.length; ri++) {
-              const req = sub.requirements[ri];
-              const level = req.assurance_level;
-              const reqId = `${fnName}-${ci}-${cat.subcategories.indexOf(sub)}-${ri}`;
-              html += `<div class="requirement level-${level}" data-level="${level}" data-km="${req.key_measure ? '1' : '0'}">
+    function renderRequirementHtml(req, fnName, ci, si, ri, subCode, subDesc) {
+      const level = req.assurance_level;
+      const reqId = `${fnName}-${ci}-${si}-${ri}`;
+      return `<div class="requirement level-${level}" data-level="${level}" data-km="${req.key_measure ? '1' : '0'}">
                 <span class="badge">${level}</span>
                 ${req.key_measure ? '<span class="key-measure">★ KM</span>' : ''}
                 <span class="req-text">${escapeHtml(req.requirement)}</span>
@@ -959,11 +894,68 @@
                 </div>
                 <span class="search-only">${escapeHtml(subCode)} ${escapeHtml(subDesc)}</span>
               </div>`;
-            }
-            html += `</div>`;
-          }
+    }
 
-          html += `</div></div>`;
+    function renderSubcategoryHtml(sub, fnName, ci, si) {
+      const subCode = sub.code || '';
+      const subDesc = sub.description || '';
+      let html = `<div class="subcategory">
+              <div class="subcategory-header">
+                <div class="subcategory-info">
+                  <div class="subcategory-code">${escapeHtml(subCode)}</div>
+                  ${subDesc ? `<div class="subcategory-desc">${escapeHtml(subDesc)}</div>` : ''}
+                </div>
+                <div class="score-pills">
+                  <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="subDoc-${fnName}-${ci}-${si}">-</span></div>
+                  <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="subImpl-${fnName}-${ci}-${si}">-</span></div>
+                </div>
+              </div>`;
+      for (let ri = 0; ri < sub.requirements.length; ri++) {
+        html += renderRequirementHtml(sub.requirements[ri], fnName, ci, si, ri, subCode, subDesc);
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function renderCategoryHtml(cat, fnName, ci) {
+      const catName = cat.name.split(':')[0] || cat.name;
+      const catDesc = cat.name.includes(':') ? cat.name.split(':').slice(1).join(':').trim() : '';
+      let html = `<div class="category" data-category="${ci}">
+            <div class="category-header" onclick="toggleCategory(this)">
+              <div class="chevron-sm">▾</div>
+              <div class="cat-name" title="${escapeHtml(catDesc)}">${escapeHtml(catName)}</div>
+              <div class="cat-scores">
+                <div class="score-pill"><span class="score-label">Doc</span><span class="score-value s-na" id="catDoc-${fnName}-${ci}">-</span></div>
+                <div class="score-pill"><span class="score-label">Impl</span><span class="score-value s-na" id="catImpl-${fnName}-${ci}">-</span></div>
+              </div>
+              <div class="cat-count" id="catCount-${fnName}-${ci}"></div>
+            </div>
+            <div class="category-body" id="catBody-${fnName}-${ci}">`;
+      for (let si = 0; si < cat.subcategories.length; si++) {
+        html += renderSubcategoryHtml(cat.subcategories[si], fnName, ci, si);
+      }
+      html += `</div></div>`;
+      return html;
+    }
+
+    function renderFunctions() {
+      if (!data) return;
+      const main = document.getElementById('mainContent');
+      let html = '';
+
+      for (const [fnName, categories] of Object.entries(data.functions)) {
+        const color = FN_COLORS[fnName];
+        const abbr = fnName.substring(0, 3);
+        html += `<div class="function-section" data-function="${fnName}">
+          <div class="function-header" style="border-left-color:${color}" onclick="toggleFunction(this)">
+            <div class="fn-icon" style="background:${color}">${abbr}</div>
+            <div class="fn-title">${fnName}</div>
+            <div class="fn-count" id="fnCount-${fnName}"></div>
+            <div class="chevron">▾</div>
+          </div>
+          <div class="function-body" id="fnBody-${fnName}">`;
+        for (let ci = 0; ci < categories.length; ci++) {
+          html += renderCategoryHtml(categories[ci], fnName, ci);
         }
         html += `</div></div>`;
       }
@@ -972,15 +964,9 @@
       updateAllScores();
     }
 
-    function applyFilters() {
-      if (!data) return;
-      const maxLevel = LEVEL_HIERARCHY[selectedLevel];
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-      // Filter requirements
+    function filterRequirements(maxLevel, searchTerm) {
       document.querySelectorAll('.requirement').forEach(el => {
-        const level = el.dataset.level;
-        const reqLevel = LEVEL_HIERARCHY[level] || 99;
+        const reqLevel = LEVEL_HIERARCHY[el.dataset.level] || 99;
         const isKm = el.dataset.km === '1';
         const text = el.textContent.toLowerCase();
         const visible = reqLevel <= maxLevel
@@ -988,49 +974,35 @@
           && (!searchTerm || text.includes(searchTerm));
         el.classList.toggle('filtered-out', !visible);
       });
-
-      // Hide empty subcategories
       document.querySelectorAll('.subcategory').forEach(el => {
-        const hasVisible = el.querySelector('.requirement:not(.filtered-out)');
-        el.classList.toggle('filtered-out', !hasVisible);
+        el.classList.toggle('filtered-out', !el.querySelector('.requirement:not(.filtered-out)'));
       });
+    }
 
-      // Update counts and hide empty categories
+    function updateFilterCounts(maxLevel, searchTerm) {
       for (const fnName of Object.keys(data.functions)) {
         let fnTotal = 0;
-
         for (let ci = 0; ci < data.functions[fnName].length; ci++) {
-          let catCount = 0;
-          const cat = data.functions[fnName][ci];
-          for (const sub of cat.subcategories) {
-            const subCode = (sub.code || '').toLowerCase();
-            const subDesc = (sub.description || '').toLowerCase();
-            for (const req of sub.requirements) {
-              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-              if (reqLevel > maxLevel) continue;
-              if (keyMeasuresOnly && !req.key_measure) continue;
-              if (searchTerm && !req.requirement.toLowerCase().includes(searchTerm)
-                  && !subCode.includes(searchTerm)
-                  && !subDesc.includes(searchTerm)) continue;
-              catCount++;
-            }
-          }
+          const catCount = countVisibleInCategory(data.functions[fnName][ci], maxLevel, searchTerm);
           fnTotal += catCount;
           const catEl = document.getElementById(`catCount-${fnName}-${ci}`);
           if (catEl) catEl.textContent = `${catCount} controls`;
-
-          // Hide empty category
           const catSection = catEl?.closest('.category');
           if (catSection) catSection.classList.toggle('filtered-out', catCount === 0);
         }
-
         const fnCountEl = document.getElementById(`fnCount-${fnName}`);
         if (fnCountEl) fnCountEl.textContent = `${fnTotal} controls`;
-
-        // Hide empty function section
         const fnSection = fnCountEl?.closest('.function-section');
         if (fnSection) fnSection.classList.toggle('filtered-out', fnTotal === 0);
       }
+    }
+
+    function applyFilters() {
+      if (!data) return;
+      const maxLevel = LEVEL_HIERARCHY[selectedLevel];
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      filterRequirements(maxLevel, searchTerm);
+      updateFilterCounts(maxLevel, searchTerm);
       renderStats();
       updateAllScores();
     }

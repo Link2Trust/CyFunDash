@@ -310,30 +310,29 @@
       return `<span class="score-cell ${scoreClass(val)}">${fmt(val)}</span>`;
     }
 
-    // Build a lookup: reqCode -> reqId for key measures
-    function buildReqIdLookup() {
-      const lookup = {};
+    function forEachRequirement(callback) {
       for (const [fnName, categories] of Object.entries(data.functions)) {
         for (let ci = 0; ci < categories.length; ci++) {
           const cat = categories[ci];
           for (let si = 0; si < cat.subcategories.length; si++) {
             const sub = cat.subcategories[si];
             for (let ri = 0; ri < sub.requirements.length; ri++) {
-              const req = sub.requirements[ri];
-              // Extract code from requirement text (e.g. "PR.AA-01.1: ...")
-              const reqText = req.requirement;
-              const codeMatch = reqText.match(/^([A-Z]{2}\.[A-Z]{2}-[\d]+\.[\d]+)/);
-              if (codeMatch) {
-                lookup[codeMatch[1]] = `${fnName}-${ci}-${si}-${ri}`;
-              }
-              if (req.key_measure) {
-                // Also store by partial matching
-                lookup[`km-${fnName}-${ci}-${si}-${ri}`] = `${fnName}-${ci}-${si}-${ri}`;
-              }
+              callback(fnName, ci, si, ri, sub.requirements[ri]);
             }
           }
         }
       }
+    }
+
+    // Build a lookup: reqCode -> reqId for key measures
+    function buildReqIdLookup() {
+      const lookup = {};
+      forEachRequirement((fnName, ci, si, ri, req) => {
+        const reqId = `${fnName}-${ci}-${si}-${ri}`;
+        const codeMatch = req.requirement.match(/^([A-Z]{2}\.[A-Z]{2}-[\d]+\.[\d]+)/);
+        if (codeMatch) lookup[codeMatch[1]] = reqId;
+        if (req.key_measure) lookup[`km-${reqId}`] = reqId;
+      });
       return lookup;
     }
 
@@ -381,51 +380,57 @@
       return null;
     }
 
+    function minOrNull(arr) {
+      return arr.length > 0 ? Math.min(...arr) : null;
+    }
+
+    function avgOrNull(arr) {
+      return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+    }
+
+    function collectSubScores(sub, fnName, ci, si, maxLevel) {
+      const doc = [], impl = [];
+      for (let ri = 0; ri < sub.requirements.length; ri++) {
+        const req = sub.requirements[ri];
+        const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
+        if (reqLevel > maxLevel) continue;
+        const reqId = `${fnName}-${ci}-${si}-${ri}`;
+        doc.push(effectiveScore(reqId, 'doc'));
+        impl.push(effectiveScore(reqId, 'impl'));
+      }
+      return { doc, impl };
+    }
+
+    function findTargetForCategory(cat) {
+      const catShort = cat.name.split(':')[0].trim();
+      const summaryEntry = data.summary.find(s =>
+        s.category.includes(catShort.split('(')[1]?.replace(')', '').trim() || catShort)
+      );
+      return summaryEntry ? summaryEntry.target_maturity : 3;
+    }
+
     function computeCategoryScores() {
       const maxLevel = LEVEL_HIERARCHY[selectedLevel] || 3;
       const result = [];
       for (const [fnName, categories] of Object.entries(data.functions)) {
-        let fnDocScores = [];
-        let fnImplScores = [];
         for (let ci = 0; ci < categories.length; ci++) {
           const cat = categories[ci];
-          let catSubDocScores = [];
-          let catSubImplScores = [];
+          const catSubDocScores = [], catSubImplScores = [];
           for (let si = 0; si < cat.subcategories.length; si++) {
-            const sub = cat.subcategories[si];
-            let subDoc = [], subImpl = [];
-            for (let ri = 0; ri < sub.requirements.length; ri++) {
-              const req = sub.requirements[ri];
-              const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-              if (reqLevel > maxLevel) continue;
-              const reqId = `${fnName}-${ci}-${si}-${ri}`;
-              subDoc.push(effectiveScore(reqId, 'doc'));
-              subImpl.push(effectiveScore(reqId, 'impl'));
-            }
-            if (subDoc.length > 0) catSubDocScores.push(Math.min(...subDoc));
-            if (subImpl.length > 0) catSubImplScores.push(Math.min(...subImpl));
+            const { doc, impl } = collectSubScores(cat.subcategories[si], fnName, ci, si, maxLevel);
+            if (doc.length > 0) catSubDocScores.push(Math.min(...doc));
+            if (impl.length > 0) catSubImplScores.push(Math.min(...impl));
           }
-          const docAvg = catSubDocScores.length > 0
-            ? catSubDocScores.reduce((a,b) => a+b, 0) / catSubDocScores.length : null;
-          const implAvg = catSubImplScores.length > 0
-            ? catSubImplScores.reduce((a,b) => a+b, 0) / catSubImplScores.length : null;
+          const docAvg = avgOrNull(catSubDocScores);
+          const implAvg = avgOrNull(catSubImplScores);
           const catScore = (docAvg !== null && implAvg !== null)
             ? Math.min(docAvg, implAvg) : (docAvg || implAvg || null);
-
-          // Find matching summary entry for target
-          const summaryEntry = data.summary.find(s => {
-            const catShort = cat.name.split(':')[0].trim();
-            return s.category.includes(catShort.split('(')[1]?.replace(')', '').trim() || catShort);
-          });
-          const target = summaryEntry ? summaryEntry.target_maturity : 3;
-
           result.push({
             function: fnName,
             category: cat.name.split(':')[0].trim(),
-            target, docAvg, implAvg, catScore
+            target: findTargetForCategory(cat),
+            docAvg, implAvg, catScore
           });
-          if (docAvg !== null) fnDocScores.push(docAvg);
-          if (implAvg !== null) fnImplScores.push(implAvg);
         }
       }
       return result;
@@ -528,64 +533,62 @@
       tbody.innerHTML = html;
     }
 
-    function renderOverview() {
-      const targets = LEVEL_TARGETS[selectedLevel] || LEVEL_TARGETS.Essential;
-      const catScores = computeCategoryScores();
-      const allScores = catScores.filter(c => c.catScore !== null).map(c => c.catScore);
-      const totalMaturity = allScores.length > 0
-        ? allScores.reduce((a,b) => a+b, 0) / allScores.length : null;
-
-      // Gauge
+    function updateGauge(totalMaturity, targets) {
       const gaugeVal = document.getElementById('gaugeValue');
       const gaugeFill = document.getElementById('gaugeFill');
       const gaugeTarget = document.getElementById('gaugeTarget');
       gaugeVal.textContent = fmt(totalMaturity);
       gaugeTarget.textContent = `≥ ${fmt(targets.total)} / 5`;
+      if (totalMaturity === null) return;
+      const pct = Math.min(totalMaturity / 5, 1);
+      const circumference = 2 * Math.PI * 42;
+      const offset = circumference * (1 - pct);
+      const color = totalMaturity >= targets.total ? '#059669' : totalMaturity >= targets.total * 0.7 ? '#d97706' : '#dc2626';
+      gaugeFill.style.stroke = color;
+      gaugeFill.style.strokeDashoffset = offset;
+      gaugeVal.style.color = color;
+    }
 
-      if (totalMaturity !== null) {
-        const pct = Math.min(totalMaturity / 5, 1);
-        const circumference = 2 * Math.PI * 42;
-        const offset = circumference * (1 - pct);
-        const color = totalMaturity >= targets.total ? '#059669' : totalMaturity >= targets.total * 0.7 ? '#d97706' : '#dc2626';
-        gaugeFill.style.stroke = color;
-        gaugeFill.style.strokeDashoffset = offset;
-        gaugeVal.style.color = color;
-      }
-
-      // Thresholds
-      const thresholds = document.getElementById('thresholdsList');
-
-      // KM threshold: each KM score >= category target
-      let kmPass = true;
-      let kmCount = 0;
-      let kmFail = 0;
+    function computeKMThreshold(targets) {
+      let pass = true, fail = 0;
       for (const km of (data.key_measures || [])) {
         const reqId = findReqId(km.code);
         if (!reqId || !isReqInLevel(reqId)) continue;
-        kmCount++;
         const doc = effectiveScore(reqId, 'doc');
         const impl = effectiveScore(reqId, 'impl');
-        if (Math.min(doc, impl) < targets.category) { kmPass = false; kmFail++; }
+        if (Math.min(doc, impl) < targets.category) { pass = false; fail++; }
       }
+      return { pass, fail };
+    }
 
-      // Category threshold: each category >= category target
-      let catPass = true;
-      let catFail = 0;
+    function computeCatThreshold(catScores, targets) {
+      let pass = true, fail = 0;
       for (const c of catScores) {
-        if (c.catScore !== null && c.catScore < targets.category) { catPass = false; catFail++; }
+        if (c.catScore !== null && c.catScore < targets.category) { pass = false; fail++; }
       }
+      return { pass, fail };
+    }
 
-      // Total threshold: average >= total target
+    function renderOverview() {
+      const targets = LEVEL_TARGETS[selectedLevel] || LEVEL_TARGETS.Essential;
+      const catScores = computeCategoryScores();
+      const allScores = catScores.filter(c => c.catScore !== null).map(c => c.catScore);
+      const totalMaturity = avgOrNull(allScores);
+
+      updateGauge(totalMaturity, targets);
+
+      const km = computeKMThreshold(targets);
+      const cat = computeCatThreshold(catScores, targets);
       const totalPass = totalMaturity !== null && totalMaturity >= targets.total;
 
-      thresholds.innerHTML = `
+      document.getElementById('thresholdsList').innerHTML = `
         <div class="threshold-item">
           <span>Each Key Measure maturity ≥ ${fmt(targets.category)}/5</span>
-          <span class="threshold-check ${kmPass ? 'pass' : 'fail'}">${kmPass ? '✓' : `✗ (${kmFail} below)`}</span>
+          <span class="threshold-check ${km.pass ? 'pass' : 'fail'}">${km.pass ? '✓' : `✗ (${km.fail} below)`}</span>
         </div>
         <div class="threshold-item">
           <span>Each Category maturity ≥ ${fmt(targets.category)}/5</span>
-          <span class="threshold-check ${catPass ? 'pass' : 'fail'}">${catPass ? '✓' : `✗ (${catFail} below)`}</span>
+          <span class="threshold-check ${cat.pass ? 'pass' : 'fail'}">${cat.pass ? '✓' : `✗ (${cat.fail} below)`}</span>
         </div>
         <div class="threshold-item">
           <span>Total maturity average ≥ ${fmt(targets.total)}/5</span>

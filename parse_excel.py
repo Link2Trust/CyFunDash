@@ -4,6 +4,7 @@ Parse the CyFun2025 Self-Assessment Excel file and extract structured data as JS
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -17,12 +18,27 @@ FUNCTION_SHEETS = ["GOVERN", "IDENTIFY", "PROTECT", "DETECT", "RESPOND", "RECOVE
 ASSURANCE_HIERARCHY = {"Basic": 1, "Important": 2, "Essential": 3}
 
 
-def safe_cell_value(row_tuple, col_index):
-    """Safely get a cell value handling merged cells."""
-    if col_index >= len(row_tuple):
-        return None
-    cell = row_tuple[col_index]
-    return cell
+def _get_cell(row, index):
+    """Get cell value at index, or None if out of range."""
+    return row[index] if len(row) > index else None
+
+
+def _parse_subcategory_text(text):
+    """Split 'CODE: Description' into (code, description)."""
+    if ":" in text:
+        code, desc = text.split(":", 1)
+        return code.strip(), desc.strip()
+    return text, ""
+
+
+def _build_requirement(col_c, col_e, col_f):
+    """Build a requirement dict from column values."""
+    is_key_measure = bool(col_c and str(col_c).strip().lower() == "key measure")
+    return {
+        "assurance_level": col_e.strip() if isinstance(col_e, str) else str(col_e),
+        "requirement": col_f.strip(),
+        "key_measure": is_key_measure,
+    }
 
 
 def parse_function_sheet(ws, sheet_name):
@@ -32,49 +48,29 @@ def parse_function_sheet(ws, sheet_name):
     current_subcategory = None
 
     for row in ws.iter_rows(min_row=3, max_row=ws.max_row, values_only=True):
-        col_a = row[0] if len(row) > 0 else None  # Category
-        col_c = row[2] if len(row) > 2 else None  # Key Measure flag
-        col_d = row[3] if len(row) > 3 else None  # Subcategory
-        col_e = row[4] if len(row) > 4 else None  # Assurance level
-        col_f = row[5] if len(row) > 5 else None  # Requirement
+        col_a = _get_cell(row, 0)
+        col_c = _get_cell(row, 2)
+        col_d = _get_cell(row, 3)
+        col_e = _get_cell(row, 4)
+        col_f = _get_cell(row, 5)
 
         # New category
         if col_a and isinstance(col_a, str) and col_a.strip():
-            current_category = {
-                "name": col_a.strip(),
-                "subcategories": [],
-            }
+            current_category = {"name": col_a.strip(), "subcategories": []}
             categories.append(current_category)
 
         # New subcategory
         if col_d and isinstance(col_d, str) and col_d.strip():
-            raw_sub = col_d.strip()
-            if ":" in raw_sub:
-                sub_code, sub_desc = raw_sub.split(":", 1)
-                sub_code = sub_code.strip()
-                sub_desc = sub_desc.strip()
-            else:
-                sub_code = raw_sub
-                sub_desc = ""
-
-            current_subcategory = {
-                "code": sub_code,
-                "description": sub_desc,
-                "requirements": [],
-            }
+            code, desc = _parse_subcategory_text(col_d.strip())
+            current_subcategory = {"code": code, "description": desc, "requirements": []}
             if current_category:
                 current_category["subcategories"].append(current_subcategory)
 
         # Requirement row
-        if col_e and col_f and isinstance(col_f, str) and col_f.strip():
-            is_key_measure = bool(col_c and str(col_c).strip().lower() == "key measure")
-            requirement = {
-                "assurance_level": col_e.strip() if isinstance(col_e, str) else str(col_e),
-                "requirement": col_f.strip(),
-                "key_measure": is_key_measure,
-            }
-            if current_subcategory:
-                current_subcategory["requirements"].append(requirement)
+        if col_e and col_f and isinstance(col_f, str) and col_f.strip() and current_subcategory:
+            current_subcategory["requirements"].append(
+                _build_requirement(col_c, col_e, col_f)
+            )
 
     return categories
 
@@ -94,71 +90,95 @@ def parse_maturity_levels(wb):
     return levels
 
 
-def parse_summary(wb):
-    """Parse the ESSENTIAL Summary sheet for category scores and key measures."""
-    ws = wb["ESSENTIAL Summary"]
+# Column groups for key measures: (code_col, desc_col, target_col)
+_KM_COLUMN_GROUPS = [
+    (11, 12, 13),  # L, M, N
+    (18, 19, 20),  # S, T, U
+    (25, 26, 27),  # Z, AA, AB
+]
+
+
+def _parse_summary_categories(ws):
+    """Parse category entries from the ESSENTIAL Summary sheet."""
     categories = []
     current_function = None
-
-    # Row 3 has target total maturity in H
-    target_total = None
-    for row in ws.iter_rows(min_row=3, max_row=3, values_only=True):
-        target_total = row[7] if len(row) > 7 else None  # col H
-
     for row in ws.iter_rows(min_row=4, max_row=24, values_only=True):
-        col_a = row[0] if len(row) > 0 else None
-        col_b = row[1] if len(row) > 1 else None
-        col_c = row[2] if len(row) > 2 else None
-
+        col_a = _get_cell(row, 0)
+        col_b = _get_cell(row, 1)
+        col_c = _get_cell(row, 2)
         if col_a and isinstance(col_a, str):
             current_function = col_a.strip()
-
         if col_b and isinstance(col_b, str) and col_b.strip():
             categories.append({
                 "function": current_function,
                 "category": col_b.strip(),
                 "target_maturity": col_c if col_c else 0,
             })
+    return categories
 
-    # Parse key measures from 3 column groups (L-Q, S-X, Z-AE)
-    # Skip header rows by checking for valid requirement codes (e.g. "PR.AA-01.1")
-    import re
-    km_code_pattern = re.compile(r'^[A-Z]{2}\.[A-Z]{2}-\d')
+
+def _extract_km(row, code_col, desc_col, target_col, pattern):
+    """Try to extract a key measure from specific columns in a row."""
+    if len(row) <= desc_col:
+        return None
+    cell = row[code_col]
+    if not (cell and isinstance(cell, str)):
+        return None
+    code = str(cell).strip()
+    if not pattern.match(code):
+        return None
+    target = row[target_col] if len(row) > target_col and row[target_col] else 3
+    return {
+        "code": code,
+        "description": str(row[desc_col]).strip() if row[desc_col] else "",
+        "target_maturity": target,
+    }
+
+
+def _parse_key_measures(ws, pattern):
+    """Parse key measures from all column groups in the summary sheet."""
     key_measures = []
     for row in ws.iter_rows(min_row=26, max_row=ws.max_row, values_only=True):
-        # Group 1: L=11, M=12, N=13
-        if len(row) > 12 and row[11] and isinstance(row[11], str):
-            code = str(row[11]).strip()
-            if km_code_pattern.match(code):
-                key_measures.append({
-                    "code": code,
-                    "description": str(row[12]).strip() if row[12] else "",
-                    "target_maturity": row[13] if len(row) > 13 and row[13] else 3,
-                })
-        # Group 2: S=18, T=19, U=20
-        if len(row) > 19 and row[18] and isinstance(row[18], str):
-            code = str(row[18]).strip()
-            if km_code_pattern.match(code):
-                key_measures.append({
-                    "code": code,
-                    "description": str(row[19]).strip() if row[19] else "",
-                    "target_maturity": row[20] if len(row) > 20 and row[20] else 3,
-                })
-        # Group 3: Z=25, AA=26, AB=27
-        if len(row) > 26 and row[25] and isinstance(row[25], str):
-            code = str(row[25]).strip()
-            if km_code_pattern.match(code):
-                key_measures.append({
-                    "code": code,
-                    "description": str(row[26]).strip() if row[26] else "",
-                    "target_maturity": row[27] if len(row) > 27 and row[27] else 3,
-                })
+        for code_col, desc_col, target_col in _KM_COLUMN_GROUPS:
+            km = _extract_km(row, code_col, desc_col, target_col, pattern)
+            if km:
+                key_measures.append(km)
+    return key_measures
+
+
+def parse_summary(wb):
+    """Parse the ESSENTIAL Summary sheet for category scores and key measures."""
+    ws = wb["ESSENTIAL Summary"]
+
+    target_total = None
+    for row in ws.iter_rows(min_row=3, max_row=3, values_only=True):
+        target_total = _get_cell(row, 7)
+
+    categories = _parse_summary_categories(ws)
+    km_code_pattern = re.compile(r'^[A-Z]{2}\.[A-Z]{2}-\d')
+    key_measures = _parse_key_measures(ws, km_code_pattern)
 
     return {
         "categories": categories,
         "target_total_maturity": target_total if target_total else 3.5,
         "key_measures": key_measures,
     }
+
+
+def _compute_statistics(functions):
+    """Compute per-function requirement statistics."""
+    stats = {}
+    for fn_name, categories in functions.items():
+        fn_stats = {"Basic": 0, "Important": 0, "Essential": 0, "total": 0}
+        for cat in categories:
+            for sub in cat["subcategories"]:
+                for req in sub["requirements"]:
+                    level = req["assurance_level"]
+                    if level in fn_stats:
+                        fn_stats[level] += 1
+                    fn_stats["total"] += 1
+        stats[fn_name] = fn_stats
+    return stats
 
 
 def main():
@@ -186,18 +206,7 @@ def main():
         ws = wb[sheet_name]
         data["functions"][sheet_name] = parse_function_sheet(ws, sheet_name)
 
-    # Compute statistics
-    stats = {}
-    for fn_name, categories in data["functions"].items():
-        fn_stats = {"Basic": 0, "Important": 0, "Essential": 0, "total": 0}
-        for cat in categories:
-            for sub in cat["subcategories"]:
-                for req in sub["requirements"]:
-                    level = req["assurance_level"]
-                    if level in fn_stats:
-                        fn_stats[level] += 1
-                    fn_stats["total"] += 1
-        stats[fn_name] = fn_stats
+    stats = _compute_statistics(data["functions"])
     data["statistics"] = stats
 
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
