@@ -290,7 +290,7 @@
     function effectiveScore(reqId, type) {
       const s = scores[reqId] && scores[reqId][type];
       if (!s || s === '0') return 1; // N/A = 1
-      return parseInt(s);
+      return Number.parseInt(s);
     }
 
     function scoreClass(val) {
@@ -341,9 +341,9 @@
     function getReqData(reqId) {
       const parts = reqId.split('-');
       const fnName = parts[0];
-      const ci = parseInt(parts[1], 10);
-      const si = parseInt(parts[2], 10);
-      const ri = parseInt(parts[3], 10);
+      const ci = Number.parseInt(parts[1], 10);
+      const si = Number.parseInt(parts[2], 10);
+      const ri = Number.parseInt(parts[3], 10);
       try {
         return data.functions[fnName][ci].subcategories[si].requirements[ri];
       } catch (e) {
@@ -362,7 +362,7 @@
 
     // Find the reqId for a key measure code like "PR.AA-01.1"
     function findReqId(kmCode) {
-      const clean = kmCode.replace(/\s+/g, '').replace(/:/g, '');
+      const clean = kmCode.replaceAll(/\s+/g, '').replaceAll(/:/g, '');
       for (const [fnName, categories] of Object.entries(data.functions)) {
         for (let ci = 0; ci < categories.length; ci++) {
           const cat = categories[ci];
@@ -370,7 +370,7 @@
             const sub = cat.subcategories[si];
             for (let ri = 0; ri < sub.requirements.length; ri++) {
               const req = sub.requirements[ri];
-              const reqText = req.requirement.replace(/\s+/g, '');
+              const reqText = req.requirement.replaceAll(/\s+/g, '');
               if (reqText.startsWith(clean + ':') || reqText.startsWith(clean + '\t') || reqText.startsWith(clean)) {
                 return `${fnName}-${ci}-${si}-${ri}`;
               }

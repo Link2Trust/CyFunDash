@@ -693,7 +693,7 @@
     function effectiveScore(reqId, type) {
       const s = scores[reqId] && scores[reqId][type];
       if (!s || s === '0') return 1; // N/A = 1
-      return parseInt(s);
+      return Number.parseInt(s);
     }
 
     function getScoreClass(val) {
