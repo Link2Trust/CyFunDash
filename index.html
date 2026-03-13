@@ -597,7 +597,8 @@
 
   <div class="main" id="mainContent"></div>
 
-  <script>
+  <script type="module">
+    import { avgOrNull, escapeHtml, collectSubScores } from './utils.js';
     let data = null;
     let selectedLevel = 'Essential'; // Show all by default
     let keyMeasuresOnly = false;
@@ -622,15 +623,14 @@
     };
 
     // Load data
-    (async () => {
-      try {
-        data = await (await fetch('data.json')).json();
-        await init();
-      } catch (e) {
-        document.getElementById('mainContent').innerHTML =
-          '<p style="padding:2rem;color:#dc2626">Error loading data. Run <code>python3 parse_excel.py</code> first.</p>';
-      }
-    })();
+    try {
+      data = await (await fetch('data.json')).json();
+      await init();
+    } catch (e) {
+      console.error('Failed to load data.json:', e);
+      document.getElementById('mainContent').innerHTML =
+        '<p style="padding:2rem;color:#dc2626">Error loading data. Run <code>python3 parse_excel.py</code> first.</p>';
+    }
 
     async function init() {
       await loadScores();
@@ -659,7 +659,7 @@
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) scores = JSON.parse(stored);
-      } catch(e) { scores = {}; }
+      } catch(e) { console.debug('Score parse failed, resetting', e); scores = {}; }
     }
 
     function saveScores() {
@@ -692,12 +692,6 @@
       updateAllScores();
     }
 
-    function effectiveScore(reqId, type) {
-      const s = scores[reqId] && scores[reqId][type];
-      if (!s || s === '0') return 1; // N/A = 1
-      return Number.parseInt(s);
-    }
-
     function getScoreClass(val) {
       if (val === null) return 's-na';
       const rounded = Math.floor(val);
@@ -713,24 +707,6 @@
 
     function minOrNull(arr) {
       return arr.length > 0 ? Math.min(...arr) : null;
-    }
-
-    function avgOrNull(arr) {
-      return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
-    }
-
-    function collectSubScores(sub, fnName, ci, si, maxLevel) {
-      const doc = [], impl = [];
-      for (let ri = 0; ri < sub.requirements.length; ri++) {
-        const req = sub.requirements[ri];
-        const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-        if (reqLevel > maxLevel) continue;
-        if (keyMeasuresOnly && !req.key_measure) continue;
-        const reqId = `${fnName}-${ci}-${si}-${ri}`;
-        doc.push(effectiveScore(reqId, 'doc'));
-        impl.push(effectiveScore(reqId, 'impl'));
-      }
-      return { doc, impl };
     }
 
     function updateScoreDisplay(elementId, value) {
@@ -749,7 +725,7 @@
           const catDocScores = [], catImplScores = [];
 
           for (let si = 0; si < categories[ci].subcategories.length; si++) {
-            const { doc, impl } = collectSubScores(categories[ci].subcategories[si], fnName, ci, si, maxLevel);
+            const { doc, impl } = collectSubScores(categories[ci].subcategories[si], fnName, ci, si, maxLevel, { scores, levelHierarchy: LEVEL_HIERARCHY, keyMeasuresOnly });
             const subDoc = minOrNull(doc);
             const subImpl = minOrNull(impl);
             updateScoreDisplay(`subDoc-${fnName}-${ci}-${si}`, subDoc);
@@ -783,28 +759,34 @@
       selectedLevel = level;
       try { localStorage.setItem('cyfun2025_level', level); } catch(e) { console.debug('localStorage save failed', e); }
       saveToServer();
-      document.querySelectorAll('.level-btn').forEach(btn => {
+      for (const btn of document.querySelectorAll('.level-btn')) {
         const btnLevel = btn.dataset.level;
         const btnValue = LEVEL_HIERARCHY[btnLevel];
         const selectedValue = LEVEL_HIERARCHY[level];
         btn.classList.toggle('active', btnValue <= selectedValue);
-      });
+      }
       applyFilters();
       renderStats();
+    }
+
+    function countInCategories(categories, counts) {
+      let kmCount = 0;
+      for (const cat of categories) {
+        for (const sub of cat.subcategories) {
+          for (const req of sub.requirements) {
+            if (counts[req.assurance_level] !== undefined) counts[req.assurance_level]++;
+            if (req.key_measure) kmCount++;
+          }
+        }
+      }
+      return kmCount;
     }
 
     function countByLevel() {
       const counts = { Basic: 0, Important: 0, Essential: 0 };
       let kmCount = 0;
       for (const categories of Object.values(data.functions)) {
-        for (const cat of categories) {
-          for (const sub of cat.subcategories) {
-            for (const req of sub.requirements) {
-              if (counts[req.assurance_level] !== undefined) counts[req.assurance_level]++;
-              if (req.key_measure) kmCount++;
-            }
-          }
-        }
+        kmCount += countInCategories(categories, counts);
       }
       return { counts, kmCount };
     }
@@ -967,7 +949,7 @@
     }
 
     function filterRequirements(maxLevel, searchTerm) {
-      document.querySelectorAll('.requirement').forEach(el => {
+      for (const el of document.querySelectorAll('.requirement')) {
         const reqLevel = LEVEL_HIERARCHY[el.dataset.level] || 99;
         const isKm = el.dataset.km === '1';
         const text = el.textContent.toLowerCase();
@@ -975,10 +957,10 @@
           && (!keyMeasuresOnly || isKm)
           && (!searchTerm || text.includes(searchTerm));
         el.classList.toggle('filtered-out', !visible);
-      });
-      document.querySelectorAll('.subcategory').forEach(el => {
+      }
+      for (const el of document.querySelectorAll('.subcategory')) {
         el.classList.toggle('filtered-out', !el.querySelector('.requirement:not(.filtered-out)'));
-      });
+      }
     }
 
     function updateFilterCounts(maxLevel, searchTerm) {
@@ -1014,11 +996,12 @@
       header.nextElementSibling.classList.toggle('hidden');
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
+    // Expose functions for inline HTML handlers (required for module scope)
+    globalThis.setLevel = setLevel;
+    globalThis.toggleKeyMeasures = toggleKeyMeasures;
+    globalThis.applyFilters = applyFilters;
+    globalThis.setScore = setScore;
+    globalThis.toggleSection = toggleSection;
   </script>
 </body>
 </html>

@@ -147,9 +147,26 @@
     }
     .km-cat-label { display: flex; align-items: center; gap: 0.5rem; }
 
+    /* Radar chart */
+    .radar-card {
+      background: var(--surface); border-radius: var(--radius); padding: 1.5rem;
+      box-shadow: var(--shadow); margin-bottom: 2rem;
+    }
+    .radar-wrap {
+      display: flex; align-items: center; justify-content: center;
+      gap: 2.5rem; flex-wrap: wrap;
+    }
+    .radar-svg-wrap { width: 460px; max-width: 100%; }
+    .radar-legend { display: flex; flex-direction: column; gap: 0.85rem; min-width: 140px; }
+    .radar-legend-item {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.85rem; color: var(--text);
+    }
+
     @media (max-width: 768px) {
       .maturity-overview { grid-template-columns: 1fr; }
       .header h1 { font-size: 1.2rem; }
+      .radar-svg-wrap { width: 100%; }
     }
     @media print {
       .header { background: #1e293b !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -192,6 +209,27 @@
       </div>
     </div>
 
+    <div class="radar-card">
+      <h2 class="section-title" style="margin-bottom:1.25rem">Function Maturity Radar</h2>
+      <div class="radar-wrap">
+        <div id="radarChart" class="radar-svg-wrap"></div>
+        <div class="radar-legend">
+          <div class="radar-legend-item">
+            <svg width="32" height="14" aria-hidden="true"><line x1="0" y1="7" x2="32" y2="7" stroke="#2563eb" stroke-width="2"/><circle cx="16" cy="7" r="3.5" fill="#2563eb"/></svg>
+            Documentation
+          </div>
+          <div class="radar-legend-item">
+            <svg width="32" height="14" aria-hidden="true"><line x1="0" y1="7" x2="32" y2="7" stroke="#047857" stroke-width="2"/><circle cx="16" cy="7" r="3.5" fill="#047857"/></svg>
+            Implementation
+          </div>
+          <div class="radar-legend-item">
+            <svg width="32" height="14" aria-hidden="true"><line x1="0" y1="7" x2="32" y2="7" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3"/></svg>
+            Target
+          </div>
+        </div>
+      </div>
+    </div>
+
     <h2 class="section-title">Category Maturity Scores</h2>
     <table class="cat-table">
       <thead>
@@ -222,7 +260,8 @@
     </table>
   </div>
 
-  <script>
+  <script type="module">
+    import { avgOrNull, escapeHtml, effectiveScore, collectSubScores } from './utils.js';
     let data = null;
     let scores = {};
     let selectedLevel = 'Essential';
@@ -238,22 +277,21 @@
       Essential: { total: 3.5, category: 3 }
     };
 
-    (async () => {
-      try {
-        data = await (await fetch('data.json')).json();
-        await init();
-      } catch (e) {
-        console.error('CyFun Summary error:', e);
-        document.getElementById('catTableBody').innerHTML =
-          `<tr><td colspan="5" style="color:#dc2626;padding:1rem">Error: ${e.message}</td></tr>`;
-      }
-    })();
+    try {
+      data = await (await fetch('data.json')).json();
+      await init();
+    } catch (e) {
+      console.error('CyFun Summary error:', e);
+      document.getElementById('catTableBody').innerHTML =
+        `<tr><td colspan="5" style="color:#dc2626;padding:1rem">Error: ${e.message}</td></tr>`;
+    }
 
     async function init() {
       await loadSaved();
       renderCategoryTable();
       renderKeyMeasures();
       renderOverview();
+      renderRadarChart();
       updateLevelIndicator();
     }
 
@@ -272,7 +310,7 @@
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) scores = JSON.parse(stored);
-      } catch(e) { scores = {}; }
+      } catch(e) { console.debug('Score parse failed, resetting', e); scores = {}; }
       try {
         const stored = localStorage.getItem('cyfun2025_level');
         if (stored && LEVEL_HIERARCHY[stored]) selectedLevel = stored;
@@ -287,12 +325,6 @@
       const t = document.getElementById('thresholdLevel');
       if (t) t.textContent = selectedLevel.toUpperCase();
       document.title = `CyFun® 2025 — ${selectedLevel.toUpperCase()} Summary`;
-    }
-
-    function effectiveScore(reqId, type) {
-      const s = scores[reqId] && scores[reqId][type];
-      if (!s || s === '0') return 1; // N/A = 1
-      return Number.parseInt(s);
     }
 
     function scoreClass(val) {
@@ -359,7 +391,7 @@
 
     // Find the reqId for a key measure code like "PR.AA-01.1"
     function findReqId(kmCode) {
-      const clean = kmCode.replaceAll(/\s+/g, '').replaceAll(/:/g, '');
+      const clean = kmCode.replaceAll(/\s+/g, '').replaceAll(':', '');
       for (const [fnName, categories] of Object.entries(data.functions)) {
         for (let ci = 0; ci < categories.length; ci++) {
           const cat = categories[ci];
@@ -382,23 +414,6 @@
       return arr.length > 0 ? Math.min(...arr) : null;
     }
 
-    function avgOrNull(arr) {
-      return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
-    }
-
-    function collectSubScores(sub, fnName, ci, si, maxLevel) {
-      const doc = [], impl = [];
-      for (let ri = 0; ri < sub.requirements.length; ri++) {
-        const req = sub.requirements[ri];
-        const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
-        if (reqLevel > maxLevel) continue;
-        const reqId = `${fnName}-${ci}-${si}-${ri}`;
-        doc.push(effectiveScore(reqId, 'doc'));
-        impl.push(effectiveScore(reqId, 'impl'));
-      }
-      return { doc, impl };
-    }
-
     function findTargetForCategory(cat) {
       const catShort = cat.name.split(':')[0].trim();
       const summaryEntry = data.summary.find(s =>
@@ -407,18 +422,23 @@
       return summaryEntry ? summaryEntry.target_maturity : 3;
     }
 
+    function collectCatScores(cat, fnName, ci, maxLevel) {
+      const catSubDocScores = [], catSubImplScores = [];
+      for (let si = 0; si < cat.subcategories.length; si++) {
+        const { doc, impl } = collectSubScores(cat.subcategories[si], fnName, ci, si, maxLevel, { scores, levelHierarchy: LEVEL_HIERARCHY });
+        if (doc.length > 0) catSubDocScores.push(Math.min(...doc));
+        if (impl.length > 0) catSubImplScores.push(Math.min(...impl));
+      }
+      return { catSubDocScores, catSubImplScores };
+    }
+
     function computeCategoryScores() {
       const maxLevel = LEVEL_HIERARCHY[selectedLevel] || 3;
       const result = [];
       for (const [fnName, categories] of Object.entries(data.functions)) {
         for (let ci = 0; ci < categories.length; ci++) {
           const cat = categories[ci];
-          const catSubDocScores = [], catSubImplScores = [];
-          for (let si = 0; si < cat.subcategories.length; si++) {
-            const { doc, impl } = collectSubScores(cat.subcategories[si], fnName, ci, si, maxLevel);
-            if (doc.length > 0) catSubDocScores.push(Math.min(...doc));
-            if (impl.length > 0) catSubImplScores.push(Math.min(...impl));
-          }
+          const { catSubDocScores, catSubImplScores } = collectCatScores(cat, fnName, ci, maxLevel);
           const docAvg = avgOrNull(catSubDocScores);
           const implAvg = avgOrNull(catSubImplScores);
           const catScore = (docAvg !== null && implAvg !== null)
@@ -505,8 +525,8 @@
         for (const km of groups[fn]) {
           const reqId = findReqId(km.code);
           if (!reqId || !isReqInLevel(reqId)) continue;
-          const doc = effectiveScore(reqId, 'doc');
-          const impl = effectiveScore(reqId, 'impl');
+          const doc = effectiveScore(scores, reqId, 'doc');
+          const impl = effectiveScore(scores, reqId, 'impl');
           const kmScore = Math.min(doc, impl);
           groupHtml += `<tr>
             <td class="km-code">${escapeHtml(km.code)}</td>
@@ -554,8 +574,8 @@
       for (const km of (data.key_measures || [])) {
         const reqId = findReqId(km.code);
         if (!reqId || !isReqInLevel(reqId)) continue;
-        const doc = effectiveScore(reqId, 'doc');
-        const impl = effectiveScore(reqId, 'impl');
+        const doc = effectiveScore(scores, reqId, 'doc');
+        const impl = effectiveScore(scores, reqId, 'impl');
         if (Math.min(doc, impl) < targets.category) { pass = false; fail++; }
       }
       return { pass, fail };
@@ -597,11 +617,129 @@
       `;
     }
 
-    function escapeHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+    function computeFunctionScores() {
+      const catScores = computeCategoryScores();
+      const fnOrder = ['GOVERN', 'IDENTIFY', 'PROTECT', 'DETECT', 'RESPOND', 'RECOVER'];
+      const fnDoc = {}, fnImpl = {}, fnTarget = {};
+      for (const fn of fnOrder) { fnDoc[fn] = []; fnImpl[fn] = []; fnTarget[fn] = []; }
+      for (const row of catScores) {
+        if (fnDoc[row.function] === undefined) continue;
+        if (row.docAvg !== null) fnDoc[row.function].push(row.docAvg);
+        if (row.implAvg !== null) fnImpl[row.function].push(row.implAvg);
+        if (row.target !== null) fnTarget[row.function].push(row.target);
+      }
+      return fnOrder.map(fn => ({
+        fn,
+        doc:    avgOrNull(fnDoc[fn])    ?? 1,
+        impl:   avgOrNull(fnImpl[fn])   ?? 1,
+        target: avgOrNull(fnTarget[fn]) ?? 3,
+      }));
     }
+
+    function radarLabelAlign(cosA, sinA) {
+      let anchor;
+      if (Math.abs(cosA) < 0.15)   { anchor = 'middle'; }
+      else if (cosA > 0)           { anchor = 'start';  }
+      else                         { anchor = 'end';    }
+      let baseline;
+      if (Math.abs(sinA) < 0.2)   { baseline = 'middle';  }
+      else if (sinA > 0)          { baseline = 'hanging'; }
+      else                        { baseline = 'auto';    }
+      return { anchor, baseline };
+    }
+
+    function renderRadarChart() {
+      const scores = computeFunctionScores();
+      const N = scores.length;
+      const CX = 250, CY = 215, R = 140, MAX = 5;
+      const step = (2 * Math.PI) / N;
+      const start = -Math.PI / 2;
+
+      function pt(i, val) {
+        const a = start + i * step;
+        const d = (Math.max(0, Math.min(val, MAX)) / MAX) * R;
+        return [+(CX + d * Math.cos(a)).toFixed(1), +(CY + d * Math.sin(a)).toFixed(1)];
+      }
+
+      function poly(vals) {
+        return vals.map((v, i) => pt(i, v).join(',')).join(' ');
+      }
+
+      // Concentric grid rings (hexagons at 1–5)
+      let grid = '';
+      for (let v = 1; v <= 5; v++) {
+        const pts = scores.map((_, i) => pt(i, v).join(',')).join(' ');
+        grid += `<polygon points="${pts}" fill="${v % 2 === 0 ? '#f8f9fb' : 'none'}" stroke="#e2e4e9" stroke-width="${v === 3 ? 1.5 : 0.75}"/>`;
+      }
+
+      // Axis spokes
+      let axes = '';
+      for (const [i] of scores.entries()) {
+        const [x, y] = pt(i, 5);
+        axes += `<line x1="${CX}" y1="${CY}" x2="${x}" y2="${y}" stroke="#d1d5db" stroke-width="1"/>`;
+      }
+
+      // Scale value labels along the top (GOVERN) axis
+      let scaleLabels = '';
+      for (let v = 1; v <= 5; v++) {
+        const [x, y] = pt(0, v);
+        scaleLabels += `<text x="${x + 4}" y="${y}" font-size="8" fill="#9ca3af" dominant-baseline="middle">${v}</text>`;
+      }
+
+      // Function name labels
+      const LABEL_R = 170;
+      let fnLabels = '';
+      for (const [i, s] of scores.entries()) {
+        const a = start + i * step;
+        const lx = +(CX + LABEL_R * Math.cos(a)).toFixed(1);
+        const ly = +(CY + LABEL_R * Math.sin(a)).toFixed(1);
+        const cosA = Math.cos(a);
+        const sinA = Math.sin(a);
+        const { anchor, baseline } = radarLabelAlign(cosA, sinA);
+        fnLabels += `<text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="${baseline}" font-size="11" font-weight="700" fill="${FN_COLORS[s.fn]}">${s.fn}</text>`;
+      }
+
+      // Score value labels at each spoke tip
+      let valLabels = '';
+      for (const [i, s] of scores.entries()) {
+        const a = start + i * step;
+        const cosA = Math.cos(a), sinA = Math.sin(a);
+        const { anchor } = radarLabelAlign(cosA, sinA);
+        const offsetR = 148;
+        const vx = +(CX + offsetR * cosA).toFixed(1);
+        const vy = +(CY + offsetR * sinA).toFixed(1);
+        const docV  = fmt(s.doc);
+        const implV = fmt(s.impl);
+        valLabels += `<text x="${vx}" y="${vy}" text-anchor="${anchor}" dominant-baseline="middle" font-size="8.5" fill="#475569">${docV} / ${implV}</text>`;
+      }
+
+      // Data series
+      const targetPoly = poly(scores.map(s => s.target));
+      const docPoly    = poly(scores.map(s => s.doc));
+      const implPoly   = poly(scores.map(s => s.impl));
+
+      // Dots on series
+      let dots = '';
+      for (const [i, s] of scores.entries()) {
+        const [dx, dy] = pt(i, s.doc);
+        const [ix, iy] = pt(i, s.impl);
+        dots += `<circle cx="${dx}" cy="${dy}" r="3" fill="#2563eb"/>`;
+        dots += `<circle cx="${ix}" cy="${iy}" r="3" fill="#047857"/>`;
+      }
+
+      // Center dot
+      const center = `<circle cx="${CX}" cy="${CY}" r="2.5" fill="#d1d5db"/>`;
+
+      const svgInner = `${grid}${axes}${scaleLabels}
+        <polygon points="${targetPoly}" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" stroke-linejoin="round"/>
+        <polygon points="${docPoly}" fill="rgba(37,99,235,0.1)" stroke="#2563eb" stroke-width="2" stroke-linejoin="round"/>
+        <polygon points="${implPoly}" fill="rgba(4,120,87,0.1)" stroke="#047857" stroke-width="2" stroke-linejoin="round"/>
+        ${dots}${center}${fnLabels}${valLabels}`;
+
+      document.getElementById('radarChart').innerHTML =
+        `<svg viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Function Maturity Radar" style="width:100%;height:auto">${svgInner}</svg>`;
+    }
+
   </script>
 </body>
 </html>
