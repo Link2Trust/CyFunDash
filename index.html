@@ -647,15 +647,15 @@
       const saved = await resp.json();
       if (saved.scores) scores = saved.scores;
       if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
-      if (saved.level) try { localStorage.setItem('cyfun2025_level', saved.level); } catch(e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) { console.debug('localStorage sync failed', e); }
+      if (saved.level) try { localStorage.setItem('cyfun2025_level', saved.level); } catch(e) { console.debug('localStorage sync failed', e); }
       return true;
     }
 
     async function loadScores() {
       try {
         if (await loadFromServer()) return;
-      } catch(e) {}
+      } catch(e) { console.debug('Server load failed, using localStorage', e); }
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) scores = JSON.parse(stored);
@@ -663,7 +663,7 @@
     }
 
     function saveScores() {
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(scores)); } catch(e) { console.debug('localStorage save failed', e); }
       // Auto-save to server
       saveToServer();
     }
@@ -677,7 +677,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ scores, level: selectedLevel })
-        }).catch(() => {}); // silent fail
+        }).catch(e => { console.debug('Server save failed', e); });
       }, 500);
     }
 
@@ -781,7 +781,7 @@
 
     function setLevel(level) {
       selectedLevel = level;
-      try { localStorage.setItem('cyfun2025_level', level); } catch(e) {}
+      try { localStorage.setItem('cyfun2025_level', level); } catch(e) { console.debug('localStorage save failed', e); }
       saveToServer();
       document.querySelectorAll('.level-btn').forEach(btn => {
         const btnLevel = btn.dataset.level;

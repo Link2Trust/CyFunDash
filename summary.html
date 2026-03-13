@@ -267,7 +267,7 @@
           if (saved.level && LEVEL_HIERARCHY[saved.level]) selectedLevel = saved.level;
           return;
         }
-      } catch(e) {}
+      } catch(e) { console.debug('Server load failed, using localStorage', e); }
       // Fallback: localStorage
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -276,7 +276,7 @@
       try {
         const stored = localStorage.getItem('cyfun2025_level');
         if (stored && LEVEL_HIERARCHY[stored]) selectedLevel = stored;
-      } catch(e) {}
+      } catch(e) { console.debug('localStorage read failed', e); }
     }
 
     function updateLevelIndicator() {
@@ -345,11 +345,7 @@
       const ci = Number.parseInt(parts[1], 10);
       const si = Number.parseInt(parts[2], 10);
       const ri = Number.parseInt(parts[3], 10);
-      try {
-        return data.functions[fnName][ci].subcategories[si].requirements[ri];
-      } catch (e) {
-        return null;
-      }
+      return data.functions[fnName]?.[ci]?.subcategories?.[si]?.requirements?.[ri] ?? null;
     }
 
     // Check if a requirement is within the selected assurance level
