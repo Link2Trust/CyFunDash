@@ -4,7 +4,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Copy runtime files only (no Excel source, no dev tooling)
-COPY server.py index.html summary.html utils.js data.json scores.json link2trust.svg ./
+COPY server.py index.html summary.html disclaimer.html utils.js data.json scores.json link2trust.svg ./
 
 EXPOSE 8088
 

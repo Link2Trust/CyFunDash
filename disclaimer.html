@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyFun® 2025 — Disclaimer &amp; User Guide</title>
+  <style>
+    :root {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --text: #1a1a2e;
+      --text-secondary: #5a5a7a;
+      --border: #e2e4e9;
+      --accent: #2563eb;
+      --accent-light: #dbeafe;
+      --govern: #6366f1;
+      --identify: #0891b2;
+      --protect: #059669;
+      --detect: #d97706;
+      --respond: #dc2626;
+      --recover: #7c3aed;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: var(--shadow-md);
+    }
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .header h1 span { color: #60a5fa; }
+    .header-meta { font-size: 0.85rem; opacity: 0.7; }
+    .nav-links { display: flex; gap: 0.5rem; }
+    .nav-link {
+      color: #94a3b8; text-decoration: none; font-size: 0.85rem; font-weight: 600;
+      padding: 0.4rem 0.85rem; border-radius: 6px; transition: all 0.15s;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: #3e495c; }
+    .nav-link.active { background: #485365; }
+    .header-logo { height: 38px; width: auto; margin-right: 1rem; flex-shrink: 0; }
+
+    /* Content */
+    .content {
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1rem 3rem;
+    }
+
+    /* Disclaimer notice */
+    .notice-card {
+      background: var(--accent-light);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+      font-size: 0.95rem;
+    }
+    .notice-card p + p { margin-top: 0.65rem; }
+    .notice-card strong { color: var(--accent); }
+
+    .enjoy-card {
+      background: #ecfdf5;
+      border-left: 4px solid #059669;
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+      font-size: 0.95rem;
+      color: #065f46;
+      font-weight: 600;
+    }
+
+    /* Section heading */
+    .section-heading {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Direction cards */
+    .direction-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      gap: 1.1rem;
+      align-items: flex-start;
+    }
+    .direction-number {
+      width: 34px;
+      height: 34px;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+    .direction-body { flex: 1; }
+    .direction-body h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .direction-body p {
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .direction-body p + p { margin-top: 0.5rem; }
+    .direction-body a { color: var(--accent); text-decoration: none; }
+    .direction-body a:hover { text-decoration: underline; }
+
+    /* Function tags */
+    .fn-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.65rem;
+    }
+    .fn-tag {
+      padding: 0.25rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    /* Highlight blocks within cards */
+    .info-block {
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.65rem;
+      font-size: 0.88rem;
+      color: var(--text);
+      border-left: 3px solid var(--border);
+    }
+    .info-block p + p { margin-top: 0.4rem; }
+
+    .warning-block {
+      background: #fef2f2;
+      border-left: 3px solid #fca5a5;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-top: 0.65rem;
+      font-size: 0.88rem;
+      color: #7f1d1d;
+    }
+    .warning-block strong { color: #dc2626; }
+
+    .page-footer {
+      text-align: center; padding: 1.5rem; font-size: 0.8rem;
+      color: #94a3b8; border-top: 1px solid #e2e8f0; margin-top: 2rem;
+    }
+    .page-footer a { color: #94a3b8; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      .header h1 { font-size: 1.2rem; }
+      .direction-card { gap: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-inner">
+      <img src="link2trust.svg" alt="Link2Trust" class="header-logo">
+      <div>
+        <h1><span>CyFun®</span> 2025 CyberFundamentals Dashboard</h1>
+        <div class="header-meta">Disclaimer &amp; User Guide</div>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">Controls</a>
+        <a href="summary.html" class="nav-link">Summary</a>
+        <a href="disclaimer.html" class="nav-link active">Disclaimer</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="notice-card">
+      <p>These pages are based on the self-assessment tool for the <strong>CyberFundamentals Framework version 2025</strong>
+        (<a href="https://cyfun.eu" target="_blank" rel="noopener">cyfun.eu</a>) and
+        <strong>DOES NOT replace the official Excel self-assessment tool</strong>.
+        It just provides an alternative way of assessing your maturity and readiness.</p>
+      <p>The <strong>CyberFundamentals Framework</strong> is developed by the <strong>Centre for Cybersecurity Belgium (CCB)</strong>.
+        The framework includes a set of concrete measures to protect data, significantly reduce the risk of the most common
+        cyber-attacks, and increase the cyber resilience of organisations.</p>
+      <p>The <strong>CyberFundamentals Conformity self-declaration</strong> is based on a self-assessment using the original tool.
+        The self-declaration can be verified by an independent third-party Conformity Assessment Body (CAB) and will then
+        result in a label, a verified claim or a certificate in accordance with the Conformity Assessment Scheme.</p>
+    </div>
+
+    <div class="enjoy-card">
+      ✨ &nbsp;Enjoy using this web-based version.
+    </div>
+
+    <h2 class="section-heading">Directions <span style="font-size:0.85rem;font-weight:400;color:var(--text-secondary)">(as per original XLS)</span></h2>
+
+    <div class="direction-card">
+      <div class="direction-number">1</div>
+      <div class="direction-body">
+        <h3>Assurance levels</h3>
+        <p>The CyberFundamentals self-assessment is available for the three assurance levels:
+          <strong>Basic</strong>, <strong>Important</strong> and <strong>Essential</strong>.</p>
+        <p>By selecting the appropriate assurance level you can evaluate yourself against the appropriate
+          set of controls for that assurance level.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">2</div>
+      <div class="direction-body">
+        <h3>Structure of the tool</h3>
+        <p>The self-assessment tool is organised around the six CyberFundamentals functions:</p>
+        <div class="fn-list">
+          <span class="fn-tag" style="background:var(--govern)">Govern</span>
+          <span class="fn-tag" style="background:var(--identify)">Identify</span>
+          <span class="fn-tag" style="background:var(--protect)">Protect</span>
+          <span class="fn-tag" style="background:var(--detect)">Detect</span>
+          <span class="fn-tag" style="background:var(--respond)">Respond</span>
+          <span class="fn-tag" style="background:var(--recover)">Recover</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">3</div>
+      <div class="direction-body">
+        <h3>Assessment method</h3>
+        <p>Each control is evaluated based on:</p>
+        <div class="info-block">
+          <p>📄 &nbsp;<strong>Documentation maturity</strong> — how well the control is documented.</p>
+          <p>⚙️ &nbsp;<strong>Implementation maturity</strong> — how well that documentation is put into practice.</p>
+        </div>
+        <p style="margin-top:0.65rem">Each control's maturity is determined using the definitions in the
+          <a href="https://cyfun.eu/en/cyberfundamentals-framework-2025#:~:text=The%20table%20below%20explains%20the%20different%20maturity%20levels%20and%20how%20they%20are%20used%20to%20assess%20both%20Policy%20Maturity%20and%20Implementation%20Maturity." target="_blank" rel="noopener">Maturity Levels</a>,
+          and the organisation must give each dimension of every control a score from <strong>1 to 5</strong> based on those definitions.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">4</div>
+      <div class="direction-body">
+        <h3>Calculation of results</h3>
+        <p>For each subcategory and category, the tool automatically calculates the maturity score based on the input provided.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">5</div>
+      <div class="direction-body">
+        <h3>Summary overview</h3>
+        <p>The <a href="summary.html"><strong>Summary</strong></a> page shows the maturity score and indicates whether the
+          organisation meets the thresholds set in the CyFun® Conformity Assessment Scheme.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">6</div>
+      <div class="direction-body">
+        <h3>Additional features</h3>
+        <p>The self-assessment tool provides additional filtering options, including a filter that shows only the controls
+          relevant to the selected assurance level.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">7</div>
+      <div class="direction-body">
+        <h3>Excluded measures</h3>
+        <p>For the <strong>Essential</strong> assurance level, five measures may be excluded.</p>
+        <div class="warning-block">
+          <strong>Key measures</strong> and controls linked to <strong>management aspects</strong> cannot be excluded.
+        </div>
+        <p style="margin-top:0.65rem">For each excluded measure, the option <strong>"N/A"</strong> may be selected. If "N/A"
+          is used more than five times, the affected cells are highlighted in red. Each "N/A" selection results in a score
+          of <strong>3</strong> being applied in the calculation.</p>
+      </div>
+    </div>
+
+    <div class="direction-card">
+      <div class="direction-number">8</div>
+      <div class="direction-body">
+        <h3>Controls linked to management aspects</h3>
+        <p>At the <strong>Important</strong> and <strong>Essential</strong> assurance levels, controls linked to management
+          aspects are identified with a <span style="color:#0891b2;font-weight:700;font-size:0.88rem">⚙ MA</span> badge
+          and can be filtered in the GUI.</p>
+        <div class="info-block">
+          <p>These controls must be reviewed during <strong>every certification audit</strong> — whether an initial audit,
+            surveillance audit, or recertification audit — when auditing the CyFun® <strong>"Essential"</strong> assurance level.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="page-footer">Provided by <a href="mailto:info@link2trust.be">Link2Trust</a> &mdash; info@link2trust.be</footer>
+
+</body>
+</html>
