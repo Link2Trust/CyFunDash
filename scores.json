@@ -14,10 +14,10 @@
     },
     "GOVERN-0-2-0": {
       "doc": "1",
-      "impl": "0"
+      "impl": "1"
     },
     "GOVERN-1-2-0": {
-      "doc": "4",
+      "doc": "1",
       "impl": "0"
     },
     "GOVERN-0-2-1": {
@@ -45,5 +45,5 @@
       "impl": "0"
     }
   },
-  "level": "Essential"
+  "level": "Important"
 }

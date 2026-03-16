@@ -19,13 +19,17 @@ export function effectiveScore(scores, reqId, type) {
 }
 
 export function collectSubScores(sub, fnName, ci, si, maxLevel, ctx) {
-  const { scores, levelHierarchy, keyMeasuresOnly = false } = ctx;
+  const { scores, levelHierarchy, keyMeasuresOnly = false, managementAspectsOnly = false, managementAspects = null } = ctx;
   const doc = [], impl = [];
   for (let ri = 0; ri < sub.requirements.length; ri++) {
     const req = sub.requirements[ri];
     const reqLevel = levelHierarchy[req.assurance_level] || 99;
     if (reqLevel > maxLevel) continue;
     if (keyMeasuresOnly && !req.key_measure) continue;
+    if (managementAspectsOnly && managementAspects) {
+      const code = req.requirement.replace(/\s+/g, '').split(':')[0];
+      if (!managementAspects.has(code)) continue;
+    }
     const reqId = `${fnName}-${ci}-${si}-${ri}`;
     doc.push(effectiveScore(scores, reqId, 'doc'));
     impl.push(effectiveScore(scores, reqId, 'impl'));

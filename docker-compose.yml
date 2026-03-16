@@ -1,0 +1,9 @@
+services:
+  cyfundash:
+    build: .
+    ports:
+      - "8088:8088"
+    volumes:
+      # Persist scores outside the container so they survive restarts/upgrades
+      - ./scores.json:/app/scores.json
+    restart: unless-stopped

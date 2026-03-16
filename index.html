@@ -171,6 +171,18 @@
     .km-toggle .km-star {
       font-size: 1rem;
     }
+    .ma-toggle.active {
+      border-color: #0891b2;
+      background: #e0f2fe;
+      color: #0891b2;
+    }
+    .requirement .management-aspect {
+      color: #0891b2;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.1rem;
+      flex-shrink: 0;
+    }
 
     /* Stats Bar */
     .stats-bar {
@@ -536,12 +548,17 @@
       .function-body, .category-body { display: block !important; }
       .level-selector, .search-bar { display: none; }
     }
+    .header-logo { height: 38px; width: auto; margin-right: 1rem; flex-shrink: 0; }
+    .page-footer { text-align: center; padding: 1.5rem; font-size: 0.8rem; color: #94a3b8; border-top: 1px solid #e2e8f0; margin-top: 2rem; }
+    .page-footer a { color: #94a3b8; text-decoration: none; }
+    .page-footer a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
   <div class="header">
     <div class="header-inner">
+      <img src="link2trust.svg" alt="Link2Trust" class="header-logo">
       <div>
         <h1><span>CyFun®</span> 2025 CyberFundamentals Dashboard</h1>
         <div class="header-meta">Self-Assessment Controls Overview</div>
@@ -578,6 +595,11 @@
         Key Measures Only
         <span class="count" id="countKM"></span>
       </button>
+      <button class="km-toggle ma-toggle" id="maToggle" onclick="toggleManagementAspects()">
+        <span class="km-star">⚙</span>
+        Management Aspects Only
+        <span class="count" id="countMA"></span>
+      </button>
     </div>
   </div>
 
@@ -602,7 +624,14 @@
     let data = null;
     let selectedLevel = 'Essential'; // Show all by default
     let keyMeasuresOnly = false;
+    let managementAspectsOnly = false;
+    const MA_CODES = new Set([
+      'GV.RM-01.1','GV.RM-02.1','GV.RM-03.2','GV.RR-02.1','GV.RR-02.2','GV.SC-01.1',
+      'ID.RA-05.2','ID.RA-05.3','ID.RA-06.1','ID.IM-03.9','ID.IM-04.1','ID.IM-04.2',
+      'PR.IR-04.1','DE.AE-04.1','RC.CO-03.1'
+    ]);
     let scores = {}; // { reqId: { doc: '0', impl: '0' } }
+    let saveTimer = null;
     const STORAGE_KEY = 'cyfun2025_scores';
     const LEVEL_HIERARCHY = { 'Basic': 1, 'Important': 2, 'Essential': 3 };
     const MATURITY_OPTIONS = [
@@ -668,7 +697,6 @@
       saveToServer();
     }
 
-    let saveTimer = null;
     function saveToServer() {
       // Debounce: wait 500ms after last change before saving
       clearTimeout(saveTimer);
@@ -725,7 +753,7 @@
           const catDocScores = [], catImplScores = [];
 
           for (let si = 0; si < categories[ci].subcategories.length; si++) {
-            const { doc, impl } = collectSubScores(categories[ci].subcategories[si], fnName, ci, si, maxLevel, { scores, levelHierarchy: LEVEL_HIERARCHY, keyMeasuresOnly });
+            const { doc, impl } = collectSubScores(categories[ci].subcategories[si], fnName, ci, si, maxLevel, { scores, levelHierarchy: LEVEL_HIERARCHY, keyMeasuresOnly, managementAspectsOnly, managementAspects: MA_CODES });
             const subDoc = minOrNull(doc);
             const subImpl = minOrNull(impl);
             updateScoreDisplay(`subDoc-${fnName}-${ci}-${si}`, subDoc);
@@ -770,34 +798,43 @@
     }
 
     function countInCategories(categories, counts) {
-      let kmCount = 0;
+      let kmCount = 0, maCount = 0;
       for (const cat of categories) {
         for (const sub of cat.subcategories) {
           for (const req of sub.requirements) {
             if (counts[req.assurance_level] !== undefined) counts[req.assurance_level]++;
             if (req.key_measure) kmCount++;
+            if (isManagementAspect(req)) maCount++;
           }
         }
       }
-      return kmCount;
+      return { kmCount, maCount };
     }
 
     function countByLevel() {
       const counts = { Basic: 0, Important: 0, Essential: 0 };
-      let kmCount = 0;
+      let kmCount = 0, maCount = 0;
       for (const categories of Object.values(data.functions)) {
-        kmCount += countInCategories(categories, counts);
+        const r = countInCategories(categories, counts);
+        kmCount += r.kmCount;
+        maCount += r.maCount;
       }
-      return { counts, kmCount };
+      return { counts, kmCount, maCount };
+    }
+
+    function isManagementAspect(req) {
+      const code = req.requirement.replace(/\s+/g, '').split(':')[0];
+      return MA_CODES.has(code);
     }
 
     function updateCounts() {
       if (!data) return;
-      const { counts, kmCount } = countByLevel();
+      const { counts, kmCount, maCount } = countByLevel();
       document.getElementById('countBasic').textContent = counts.Basic + ' controls';
       document.getElementById('countImportant').textContent = counts.Important + ' controls';
       document.getElementById('countEssential').textContent = counts.Essential + ' controls';
       document.getElementById('countKM').textContent = kmCount + ' controls';
+      document.getElementById('countMA').textContent = maCount + ' controls';
     }
 
     function matchesSearch(req, sub, searchTerm) {
@@ -814,6 +851,7 @@
           const reqLevel = LEVEL_HIERARCHY[req.assurance_level] || 99;
           if (reqLevel > maxLevel) continue;
           if (keyMeasuresOnly && !req.key_measure) continue;
+          if (managementAspectsOnly && !isManagementAspect(req)) continue;
           if (!matchesSearch(req, sub, searchTerm)) continue;
           count++;
         }
@@ -834,6 +872,13 @@
     function toggleKeyMeasures() {
       keyMeasuresOnly = !keyMeasuresOnly;
       document.getElementById('kmToggle').classList.toggle('active', keyMeasuresOnly);
+      applyFilters();
+      renderStats();
+    }
+
+    function toggleManagementAspects() {
+      managementAspectsOnly = !managementAspectsOnly;
+      document.getElementById('maToggle').classList.toggle('active', managementAspectsOnly);
       applyFilters();
       renderStats();
     }
@@ -862,9 +907,11 @@
     function renderRequirementHtml(req, fnName, ci, si, ri, subCode, subDesc) {
       const level = req.assurance_level;
       const reqId = `${fnName}-${ci}-${si}-${ri}`;
-      return `<div class="requirement level-${level}" data-level="${level}" data-km="${req.key_measure ? '1' : '0'}">
+      const isMa = isManagementAspect(req);
+      return `<div class="requirement level-${level}" data-level="${level}" data-km="${req.key_measure ? '1' : '0'}" data-ma="${isMa ? '1' : '0'}">
                 <span class="badge">${level}</span>
                 ${req.key_measure ? '<span class="key-measure">★ KM</span>' : ''}
+                ${isMa ? '<span class="management-aspect">⚙ MA</span>' : ''}
                 <span class="req-text">${escapeHtml(req.requirement)}</span>
                 <div class="maturity-selectors">
                   <div class="maturity-group">
@@ -952,9 +999,11 @@
       for (const el of document.querySelectorAll('.requirement')) {
         const reqLevel = LEVEL_HIERARCHY[el.dataset.level] || 99;
         const isKm = el.dataset.km === '1';
+        const isMa = el.dataset.ma === '1';
         const text = el.textContent.toLowerCase();
         const visible = reqLevel <= maxLevel
           && (!keyMeasuresOnly || isKm)
+          && (!managementAspectsOnly || isMa)
           && (!searchTerm || text.includes(searchTerm));
         el.classList.toggle('filtered-out', !visible);
       }
@@ -999,9 +1048,11 @@
     // Expose functions for inline HTML handlers (required for module scope)
     globalThis.setLevel = setLevel;
     globalThis.toggleKeyMeasures = toggleKeyMeasures;
+    globalThis.toggleManagementAspects = toggleManagementAspects;
     globalThis.applyFilters = applyFilters;
     globalThis.setScore = setScore;
     globalThis.toggleSection = toggleSection;
   </script>
+  <footer class="page-footer">Provided by <a href="mailto:info@link2trust.be">Link2Trust</a> &mdash; info@link2trust.be</footer>
 </body>
 </html>

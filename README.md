@@ -4,7 +4,7 @@ A web-based self-assessment tool for the **CyFun® 2025 CyberFundamentals** fram
 
 ## Features
 
-- **Controls page** — Browse all requirements across the 6 NIST CSF functions (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), filter by assurance level (Basic/Important/Essential), toggle key measures only, and search.
+- **Controls page** — Browse all requirements across the 6 NIST CSF functions (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), filter by assurance level (Basic/Important/Essential), toggle Key Measures or Management Aspects only, and search.
 - **Maturity scoring** — Assign Documentation and Implementation maturity levels (N/A, 1–5) per control. Subcategory scores (min), category scores (average), and overall maturity are calculated automatically.
 - **Summary dashboard** — Circular gauge for total maturity, threshold compliance checks, category maturity table grouped by function, and key measures table grouped by function.
 - **Level-dependent targets** — Thresholds adapt to the selected assurance level:
@@ -15,14 +15,28 @@ A web-based self-assessment tool for the **CyFun® 2025 CyberFundamentals** fram
 
 ## Prerequisites
 
-- Python 3.x
-- `openpyxl` library
+**Option A — Docker (recommended)**
+- Docker Desktop: https://www.docker.com/products/docker-desktop
 
-```bash
-pip install openpyxl
-```
+**Option B — Local Python**
+- Python 3.x with `openpyxl`:
+  ```bash
+  pip install openpyxl
+  ```
 
 ## Setup
+
+### Option A — Docker
+
+```bash
+docker compose -f docker/docker-compose.yml up --build -d
+```
+
+The dashboard is available at `http://localhost:8088`. Scores are persisted to `scores.json` via a bind mount.
+
+See [`docker/INSTALL.md`](docker/INSTALL.md) for distributing a pre-built image.
+
+### Option B — Local Python
 
 1. Place the Excel source file in the project directory:
    ```
@@ -51,7 +65,13 @@ cyfundash/
 ├── server.py           # HTTP server with POST /save endpoint
 ├── index.html          # Controls page (interactive scoring)
 ├── summary.html        # Summary dashboard (read-only)
+├── utils.js            # Shared pure functions (ES module)
 ├── scores.json         # Auto-saved assessment state
+├── docker/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   ├── .dockerignore
+│   └── INSTALL.md          # End-user deployment guide
 ├── README.md
 └── WARP.md
 ```
