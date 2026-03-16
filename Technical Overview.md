@@ -1,6 +1,6 @@
 # Core Components
 
-The project is a single-page-style web dashboard consisting of 5 files (plus one source Excel file):
+The project is a single-page-style web dashboard consisting of 6 runtime files (plus one source Excel file and Docker deployment assets):
 
 **1. parse_excel.py** — Data Extraction Pipeline
 
@@ -12,7 +12,12 @@ The project is a single-page-style web dashboard consisting of 5 files (plus one
 - Dependency: openpyxl
 - Output: data.json (~111 KB) — a flat JSON structure with functions, summary, key_measures, maturity_levels, statistics, and assurance_levels.
 
-**2. index.html** — Controls Page
+**2. utils.js** — Shared Module
+
+- Responsibility: Pure helper functions shared between `index.html` and `summary.html` via ES module import (`import { ... } from './utils.js'`).
+- Exports: `avgOrNull(arr)`, `escapeHtml(str)`, `effectiveScore(val)`, `collectSubScores(sub, fnName, ci, si, maxLevel, ctx)` — the last being the scoring engine used by both pages.
+
+**3. index.html** — Controls Page
 
 - Responsibility: Interactive assessment interface where users assign maturity scores per control.
 - Key JS functions:
@@ -21,11 +26,13 @@ The project is a single-page-style web dashboard consisting of 5 files (plus one
 	- saveScores() / saveToServer() — Dual-write to localStorage + debounced POST /save (500ms).
 	- setScore(reqId, type, value) — Updates a single doc/impl score, persists, re-renders.
 	- updateAllScores() — Recalculates all subcategory (min) and category (average) scores, updating DOM elements.
-	- applyFilters() — Applies assurance level, key-measures-only, and search text filters; hides non-matching controls via CSS class toggling.
+	- applyFilters() — Applies assurance level, key-measures-only, management-aspects-only, and search text filters; hides non-matching controls via CSS class toggling.
+	- toggleKeyMeasures() / toggleManagementAspects() — Toggle KM/MA filter state, re-run applyFilters() and renderStats().
+	- MA_CODES — Constant Set of 15 management aspect requirement codes. isManagementAspect(req) checks membership.
 	- renderFunctions() — Builds the full DOM tree: collapsible function sections → categories → subcategories → requirement rows with maturity dropdowns.
 - reqId convention: "FUNCTION-catIdx-subIdx-reqIdx" (e.g. "GOVERN-0-1-3") used as the universal key for scores.
 
-**3. summary.html** — Summary/Dashboard Page
+**4. summary.html** — Summary/Dashboard Page
 
 - Responsibility: Read-only dashboard showing aggregate maturity scores, threshold compliance, and key measure status.
 - Key JS functions:
@@ -35,14 +42,14 @@ The project is a single-page-style web dashboard consisting of 5 files (plus one
    	- isReqInLevel(reqId) / getReqData(reqId) — Helper to resolve a reqId back to its requirement object and check assurance level membership.
 - Level-dependent targets via LEVEL_TARGETS constant: Basic (total: 2.5, category: 2.5), Important (total: 3, category: 3), Essential (total: 3.5, category: 3).
 
-**4. server.py** — Custom HTTP Server
+**5. server.py** — Custom HTTP Server
 
 - Responsibility: Static file serving + single POST /save endpoint for score persistence.
 - Extends SimpleHTTPRequestHandler with a CyFunHandler class.
 - Writes incoming JSON to scores.json on disk.
 - Suppresses 200-status request logging.
 
-**5. scores.json** — Persisted State
+**6. scores.json** — Persisted State
 
 - Structure: { "scores": { "<reqId>": { "doc": "<0-5>", "impl": "<0-5>" }, ... }, "level": "<Basic|Important|Essential>" }
 - Written by server.py on POST /save, read by both HTML pages on load.
@@ -69,18 +76,18 @@ Excel file ──[parse_excel.py]──► data.json (static, one-time)
 
 # Deployment Architecture
 
-** Prerequisites:**
-- Python 3.x with openpyxl (pip install openpyxl)
-- A modern web browser
+**Option A — Docker (recommended for distribution)**
+- Requires Docker Desktop.
+- `docker compose -f docker/docker-compose.yml up --build -d` — builds the image from `docker/Dockerfile` (Python 3.12-slim, copies runtime files only) and starts the container on port 8088.
+- `scores.json` is bind-mounted for persistence across container restarts.
+- For end-user distribution, export image as `cyfundash.tar.gz` and provide `docker/INSTALL.md`.
 
-# Setup
+**Option B — Local Python**
+- Python 3.x with openpyxl (`pip install openpyxl`).
+- Run `python3 parse_excel.py` to generate `data.json`, then `python3 server.py`.
+- Open http://localhost:8088 in a browser.
 
-1. Place the Excel file (CyFun2025_Self-Assessment_tool_ESSENTIAL_v3.1.xlsx) in the project directory.
-2. Run python3 parse_excel.py to generate data.json.
-3. Run python3 server.py to start the server on port 8088.
-4. Open http://localhost:8088 in a browser.
-
-No build step, no containerization, no external services. The entire application is a set of static files served by a single-file Python HTTP server. The server's only dynamic behavior is the POST /save endpoint. There is no database — scores.json is the sole persistence mechanism.
+No build step, no framework. The entire application is a set of static files served by a single-file Python HTTP server. The server's only dynamic behavior is the POST /save endpoint. There is no database — scores.json is the sole persistence mechanism.
 
 
 # Runtime Behavior
