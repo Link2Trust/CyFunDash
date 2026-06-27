@@ -1,6 +1,6 @@
 # Core Components
 
-The project is a single-page-style web dashboard consisting of 6 runtime files (plus one source Excel file and Docker deployment assets):
+The project is a single-page-style web dashboard consisting of 7 runtime files (plus one source Excel file and Docker deployment assets at the project root):
 
 **1. parse_excel.py** — Data Extraction Pipeline
 
@@ -17,7 +17,12 @@ The project is a single-page-style web dashboard consisting of 6 runtime files (
 - Responsibility: Pure helper functions shared between `index.html` and `summary.html` via ES module import (`import { ... } from './utils.js'`).
 - Exports: `avgOrNull(arr)`, `escapeHtml(str)`, `effectiveScore(val)`, `collectSubScores(sub, fnName, ci, si, maxLevel, ctx)` — the last being the scoring engine used by both pages.
 
-**3. index.html** — Controls Page
+**3. disclaimer.html** — Disclaimer & User Guide
+
+- Responsibility: Static informational page. No JavaScript. Displays the tool disclaimer, CCB/CyFun framework description, and 8 numbered directions for use (assurance levels, structure, assessment method, scoring, summary, features, excluded measures, management aspects).
+- Navigation: Links to index.html and summary.html via shared header nav.
+
+**4. index.html** — Controls Page
 
 - Responsibility: Interactive assessment interface where users assign maturity scores per control.
 - Key JS functions:
@@ -32,7 +37,7 @@ The project is a single-page-style web dashboard consisting of 6 runtime files (
 	- renderFunctions() — Builds the full DOM tree: collapsible function sections → categories → subcategories → requirement rows with maturity dropdowns.
 - reqId convention: "FUNCTION-catIdx-subIdx-reqIdx" (e.g. "GOVERN-0-1-3") used as the universal key for scores.
 
-**4. summary.html** — Summary/Dashboard Page
+**5. summary.html** — Summary/Dashboard Page
 
 - Responsibility: Read-only dashboard showing aggregate maturity scores, threshold compliance, and key measure status.
 - Key JS functions:
@@ -42,14 +47,14 @@ The project is a single-page-style web dashboard consisting of 6 runtime files (
    	- isReqInLevel(reqId) / getReqData(reqId) — Helper to resolve a reqId back to its requirement object and check assurance level membership.
 - Level-dependent targets via LEVEL_TARGETS constant: Basic (total: 2.5, category: 2.5), Important (total: 3, category: 3), Essential (total: 3.5, category: 3).
 
-**5. server.py** — Custom HTTP Server
+**6. server.py** — Custom HTTP Server
 
 - Responsibility: Static file serving + single POST /save endpoint for score persistence.
 - Extends SimpleHTTPRequestHandler with a CyFunHandler class.
 - Writes incoming JSON to scores.json on disk.
 - Suppresses 200-status request logging.
 
-**6. scores.json** — Persisted State
+**7. scores.json** — Persisted State
 
 - Structure: { "scores": { "<reqId>": { "doc": "<0-5>", "impl": "<0-5>" }, ... }, "level": "<Basic|Important|Essential>" }
 - Written by server.py on POST /save, read by both HTML pages on load.
@@ -78,7 +83,7 @@ Excel file ──[parse_excel.py]──► data.json (static, one-time)
 
 **Option A — Docker (recommended for distribution)**
 - Requires Docker Desktop.
-- `docker compose -f docker/docker-compose.yml up --build -d` — builds the image from `docker/Dockerfile` (Python 3.12-slim, copies runtime files only) and starts the container on port 8088.
+- `docker compose up --build -d` (run from project root) — `Dockerfile`, `docker-compose.yml`, and `.dockerignore` are at the project root. Builds a Python 3.12-slim image, copies runtime files only, starts on port 8088.
 - `scores.json` is bind-mounted for persistence across container restarts.
 - For end-user distribution, export image as `cyfundash.tar.gz` and provide `docker/INSTALL.md`.
 

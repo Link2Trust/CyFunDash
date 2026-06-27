@@ -8,6 +8,7 @@ CyFun® 2025 CyberFundamentals Self-Assessment Dashboard. A vanilla HTML/CSS/JS 
 - `data.json` — Generated file. Never edit manually; regenerate with `python3 parse_excel.py`.
 - `index.html` — Controls page (single-file with embedded CSS and JS).
 - `summary.html` — Summary dashboard (single-file with embedded CSS and JS).
+- `disclaimer.html` — Disclaimer & User Guide page (static, no JS).
 - `utils.js` — Shared pure functions imported by both HTML pages via ES module: `avgOrNull`, `escapeHtml`, `effectiveScore`, `collectSubScores`.
 - `server.py` — Python HTTP server on port 8088. Serves static files + `POST /save` endpoint.
 - `scores.json` — Persisted assessment state (scores + assurance level). Written by server.
@@ -27,7 +28,7 @@ CyFun® 2025 CyberFundamentals Self-Assessment Dashboard. A vanilla HTML/CSS/JS 
 - CSS is inline in each HTML file. JS is inline in each HTML file **plus** `utils.js` (shared module, imported via `<script type="module">`).
 - State is dual-written to `localStorage` and `POST /save` (debounced 500ms). Both pages load from `scores.json` first, falling back to `localStorage`.
 - The source Excel file is `CyFun2025_Self-Assessment_tool_ESSENTIAL_v3.1.xlsx`.
-- Docker deployment: `docker compose -f docker/docker-compose.yml up --build -d` (port 8088). See `docker/INSTALL.md`.
+- Docker deployment: `docker compose up --build -d` (port 8088). `Dockerfile`, `docker-compose.yml`, `.dockerignore` are at the project root. See `docker/INSTALL.md` for end-user distribution.
 
 ## Testing
 - No test framework. Verify JS syntax with: `sed -n '/<script/,/<\/script>/p' <file> | sed '1d;$d' | node --input-type=module --check`
