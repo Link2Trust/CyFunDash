@@ -98,23 +98,39 @@ _KM_COLUMN_GROUPS = [
 ]
 
 
+_CATEGORY_LABEL = re.compile(r'\([A-Z]{2}\.[A-Z]{2}\)\s*$')
+
+
 def _parse_summary_categories(ws):
     """Parse category entries from the ESSENTIAL Summary sheet."""
     categories = []
     current_function = None
-    for row in ws.iter_rows(min_row=4, max_row=24, values_only=True):
+    # Categories live in rows 5-26 (GOVERN .. RECOVER). Scan a bit further and
+    # accept only rows whose label ends with a category code such as "(GV.OC)".
+    for row in ws.iter_rows(min_row=4, max_row=30, values_only=True):
         col_a = _get_cell(row, 0)
         col_b = _get_cell(row, 1)
         col_c = _get_cell(row, 2)
         if col_a and isinstance(col_a, str):
             current_function = col_a.strip()
-        if col_b and isinstance(col_b, str) and col_b.strip():
+        if col_b and isinstance(col_b, str) and _CATEGORY_LABEL.search(col_b):
             categories.append({
                 "function": current_function,
                 "category": col_b.strip(),
                 "target_maturity": col_c if col_c else 0,
             })
     return categories
+
+
+# The source workbook contains a typo in at least one key-measure code
+# (e.g. "ID.AM-03-3" instead of "ID.AM-03.3"). Normalise to the canonical
+# "XX.XX-NN.N" form so the code can be matched against the requirement text.
+_KM_CODE_TYPO = re.compile(r'^([A-Z]{2}\.[A-Z]{2}-\d+)-(\d+)$')
+
+
+def _normalize_km_code(code):
+    """Fix 'XX.XX-NN-N' typos to 'XX.XX-NN.N'."""
+    return _KM_CODE_TYPO.sub(r'\1.\2', code)
 
 
 def _extract_km(row, code_col, desc_col, target_col, pattern):
@@ -124,7 +140,7 @@ def _extract_km(row, code_col, desc_col, target_col, pattern):
     cell = row[code_col]
     if not (cell and isinstance(cell, str)):
         return None
-    code = str(cell).strip()
+    code = _normalize_km_code(str(cell).strip())
     if not pattern.match(code):
         return None
     target = row[target_col] if len(row) > target_col and row[target_col] else 3
@@ -150,9 +166,13 @@ def parse_summary(wb):
     """Parse the ESSENTIAL Summary sheet for category scores and key measures."""
     ws = wb["ESSENTIAL Summary"]
 
+    # "Target Total Maturity Level" header is in H2; its value is in H4.
     target_total = None
-    for row in ws.iter_rows(min_row=3, max_row=3, values_only=True):
-        target_total = _get_cell(row, 7)
+    for row in ws.iter_rows(min_row=3, max_row=4, values_only=True):
+        value = _get_cell(row, 7)
+        if isinstance(value, (int, float)):
+            target_total = value
+            break
 
     categories = _parse_summary_categories(ws)
     km_code_pattern = re.compile(r'^[A-Z]{2}\.[A-Z]{2}-\d')

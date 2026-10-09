@@ -1903,6 +1903,16 @@
       "function": "RESPOND",
       "category": "Incident Mitigation (RS.MI)",
       "target_maturity": 3
+    },
+    {
+      "function": "RECOVER",
+      "category": "Incident Recovery Plan Execution (RC.RP)",
+      "target_maturity": 3
+    },
+    {
+      "function": "RECOVER",
+      "category": "Incident Recovery Communication (RC.CO)",
+      "target_maturity": 3
     }
   ],
   "target_total_maturity": 3.5,
@@ -1948,7 +1958,7 @@
       "target_maturity": 3
     },
     {
-      "code": "ID.AM-03-3",
+      "code": "ID.AM-03.3",
       "description": "The organisation's network communication and external data flows shall be mapped, documented , authorised, and updated when changes occur.",
       "target_maturity": 3
     },

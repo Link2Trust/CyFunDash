@@ -364,14 +364,13 @@
       }
     }
 
-    // Build a lookup: reqCode -> reqId for key measures
+    // Lookup: requirement code (e.g. "PR.AA-01.1") -> reqId, built lazily once.
+    let reqIdLookup = null;
     function buildReqIdLookup() {
       const lookup = {};
       forEachRequirement((fnName, ci, si, ri, req) => {
-        const reqId = `${fnName}-${ci}-${si}-${ri}`;
-        const codeMatch = req.requirement.match(/^([A-Z]{2}\.[A-Z]{2}-\d+\.\d+)/);
-        if (codeMatch) lookup[codeMatch[1]] = reqId;
-        if (req.key_measure) lookup[`km-${reqId}`] = reqId;
+        const codeMatch = req.requirement.match(/^\s*([A-Z]{2}\.[A-Z]{2}-\d+\.\d+)/);
+        if (codeMatch && !(codeMatch[1] in lookup)) lookup[codeMatch[1]] = `${fnName}-${ci}-${si}-${ri}`;
       });
       return lookup;
     }
@@ -397,23 +396,9 @@
 
     // Find the reqId for a key measure code like "PR.AA-01.1"
     function findReqId(kmCode) {
+      reqIdLookup ??= buildReqIdLookup();
       const clean = kmCode.replaceAll(/\s+/g, '').replaceAll(':', '');
-      for (const [fnName, categories] of Object.entries(data.functions)) {
-        for (let ci = 0; ci < categories.length; ci++) {
-          const cat = categories[ci];
-          for (let si = 0; si < cat.subcategories.length; si++) {
-            const sub = cat.subcategories[si];
-            for (let ri = 0; ri < sub.requirements.length; ri++) {
-              const req = sub.requirements[ri];
-              const reqText = req.requirement.replaceAll(/\s+/g, '');
-              if (reqText.startsWith(clean + ':') || reqText.startsWith(clean + '\t') || reqText.startsWith(clean)) {
-                return `${fnName}-${ci}-${si}-${ri}`;
-              }
-            }
-          }
-        }
-      }
-      return null;
+      return reqIdLookup[clean] ?? null;
     }
 
     function minOrNull(arr) {

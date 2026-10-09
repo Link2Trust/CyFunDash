@@ -28,6 +28,8 @@ Make sure Docker Desktop is running before proceeding.
    docker run -d -p 8088:8088 -v ./scores.json:/app/scores.json --name cyfundash cyfundash-cyfundash
    ```
 
+   `scores.json` must exist in the current folder before you run this command; otherwise Docker creates a folder with that name and your scores cannot be saved. On Windows Command Prompt, replace `./scores.json` with `%cd%\scores.json` (PowerShell: `${PWD}\scores.json`).
+
 4. Open your browser and go to:
 
    **http://localhost:8088**

@@ -7,7 +7,7 @@ A web-based self-assessment tool for the **CyFun® 2025 CyberFundamentals** fram
 - **Controls page** — Browse all requirements across the 6 NIST CSF functions (GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, RECOVER), filter by assurance level (Basic/Important/Essential), toggle Key Measures or Management Aspects only, and search.
 - **Disclaimer & User Guide** — Overview of the framework, tool purpose, and directions for use.
 - **Maturity scoring** — Assign Documentation and Implementation maturity levels (N/A, 1–5) per control. Subcategory scores (min), category scores (average), and overall maturity are calculated automatically.
-- **Summary dashboard** — Circular gauge for total maturity, threshold compliance checks, category maturity table grouped by function, and key measures table grouped by function.
+- **Summary dashboard** — Circular gauge for total maturity, threshold compliance checks, a Function Maturity Radar (documentation vs. implementation vs. target per function), category maturity table grouped by function, and key measures table grouped by function.
 - **Level-dependent targets** — Thresholds adapt to the selected assurance level:
   - Basic: total ≥ 2.5, category/KM ≥ 2.5
   - Important: total ≥ 3, category/KM ≥ 3
@@ -35,6 +35,8 @@ docker compose up --build -d
 
 The dashboard is available at `http://localhost:8088`. Scores are persisted to `scores.json` via a bind mount.
 
+> `scores.json` must exist before the first start (it is included in the repository). If the file is missing, Docker creates a *directory* with that name and saving fails.
+
 See [`docker/INSTALL.md`](docker/INSTALL.md) for distributing a pre-built image.
 
 ### Option B — Local Python
@@ -56,6 +58,12 @@ See [`docker/INSTALL.md`](docker/INSTALL.md) for distributing a pre-built image.
    ```
    The dashboard is available at `http://localhost:8088`.
 
+   The server binds to `127.0.0.1` by default (local access only). Override with environment variables:
+   ```bash
+   HOST=0.0.0.0 PORT=9000 python3 server.py   # expose on the network, custom port
+   ```
+   The Docker image sets `HOST=0.0.0.0` so the published port is reachable.
+
 ## Project Structure
 
 ```
@@ -69,12 +77,17 @@ cyfundash/
 ├── disclaimer.html     # Disclaimer & User Guide page
 ├── utils.js            # Shared pure functions (ES module)
 ├── scores.json         # Auto-saved assessment state
+├── link2trust.svg      # Header logo
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
 ├── docker/
-│   └── INSTALL.md          # End-user deployment guide
+│   ├── INSTALL.md          # End-user deployment guide
+│   ├── cyfundash.tar.gz    # Pre-built image for distribution
+│   ├── CyFunGUI-Docker.zip # Distribution bundle (image + INSTALL.md + scores.json)
+│   └── scores.json         # Starter scores file shipped with the bundle
 ├── README.md
+├── Technical Overview.md   # Architecture and component reference
 └── WARP.md
 ```
 
@@ -82,7 +95,7 @@ cyfundash/
 
 - **No build step** — Pure vanilla HTML/CSS/JS, no frameworks or bundlers.
 - **Data pipeline** — `parse_excel.py` reads 6 function sheets + the ESSENTIAL Summary sheet using `openpyxl`, producing a single `data.json`.
-- **Server** — `server.py` extends Python's `SimpleHTTPRequestHandler` with a `POST /save` endpoint that writes `scores.json` to disk.
+- **Server** — `server.py` extends Python's `SimpleHTTPRequestHandler` with a `POST /save` endpoint that validates the payload (JSON object, `scores` object, valid `level`, max 5 MB) and writes `scores.json` to disk. Responses are sent with `Cache-Control: no-cache`.
 - **State management** — Both pages load from `scores.json` (with cache-bust) on startup, falling back to `localStorage`. The Controls page writes to both on every change (debounced 500ms for server writes).
 - **reqId convention** — Each requirement is identified as `"FUNCTION-catIdx-subIdx-reqIdx"` (e.g. `"GOVERN-0-1-3"`), used as the key in the scores object.
 
@@ -98,7 +111,8 @@ cyfundash/
 
 - The assurance level selector is **cumulative** — selecting "Important" includes both Basic and Important controls.
 - Scores and the selected assurance level are shared between the Controls and Summary pages via `scores.json`.
-- Re-run `python3 parse_excel.py` if the source Excel file is updated.
+- Re-run `python3 parse_excel.py` if the source Excel file is updated. The parser normalises a known typo in the workbook's key-measure codes (`ID.AM-03-3` → `ID.AM-03.3`); an `openpyxl` warning about "Data Validation extension" is harmless.
+- The search box on the Controls page matches requirement text and the parent subcategory code/description.
 
 ## Screenshots
 

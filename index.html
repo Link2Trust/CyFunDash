@@ -1001,7 +1001,10 @@
         const reqLevel = LEVEL_HIERARCHY[el.dataset.level] || 99;
         const isKm = el.dataset.km === '1';
         const isMa = el.dataset.ma === '1';
-        const text = el.textContent.toLowerCase();
+        // Match only on requirement text + subcategory code/description, mirroring
+        // matchesSearch() so visible rows agree with the displayed counts.
+        const text = ((el.querySelector('.req-text')?.textContent || '') + ' ' +
+                      (el.querySelector('.search-only')?.textContent || '')).toLowerCase();
         const visible = reqLevel <= maxLevel
           && (!keyMeasuresOnly || isKm)
           && (!managementAspectsOnly || isMa)

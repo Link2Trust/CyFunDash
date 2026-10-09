@@ -9,8 +9,8 @@ CyFun® 2025 CyberFundamentals Self-Assessment Dashboard. A vanilla HTML/CSS/JS 
 - `index.html` — Controls page (single-file with embedded CSS and JS).
 - `summary.html` — Summary dashboard (single-file with embedded CSS and JS).
 - `disclaimer.html` — Disclaimer & User Guide page (static, no JS).
-- `utils.js` — Shared pure functions imported by both HTML pages via ES module: `avgOrNull`, `escapeHtml`, `effectiveScore`, `collectSubScores`.
-- `server.py` — Python HTTP server on port 8088. Serves static files + `POST /save` endpoint.
+- `utils.js` — Shared pure functions imported by both HTML pages via ES module: `avgOrNull`, `escapeHtml` (string-based, escapes quotes), `effectiveScore(scores, reqId, type)`, `collectSubScores`.
+- `server.py` — Python HTTP server (default `127.0.0.1:8088`, override via `HOST`/`PORT` env vars; Docker sets `HOST=0.0.0.0`). Serves static files + validated `POST /save` endpoint.
 - `scores.json` — Persisted assessment state (scores + assurance level). Written by server.
 
 ## Conventions
@@ -27,7 +27,8 @@ CyFun® 2025 CyberFundamentals Self-Assessment Dashboard. A vanilla HTML/CSS/JS 
 - Start server: `python3 server.py` (port 8088).
 - CSS is inline in each HTML file. JS is inline in each HTML file **plus** `utils.js` (shared module, imported via `<script type="module">`).
 - State is dual-written to `localStorage` and `POST /save` (debounced 500ms). Both pages load from `scores.json` first, falling back to `localStorage`.
-- The source Excel file is `CyFun2025_Self-Assessment_tool_ESSENTIAL_v3.1.xlsx`.
+- The source Excel file is `CyFun2025_Self-Assessment_tool_ESSENTIAL_v3.1.xlsx`. `parse_excel.py` normalises the workbook's `ID.AM-03-3` key-measure typo to `ID.AM-03.3`; after changing the parser, re-run it and commit the regenerated `data.json`.
+- Key-measure codes are resolved to reqIds by exact code match (`findReqId` in `summary.html`); never use prefix matching (`X.1` vs `X.10`).
 - Docker deployment: `docker compose up --build -d` (port 8088). `Dockerfile`, `docker-compose.yml`, `.dockerignore` are at the project root. See `docker/INSTALL.md` for end-user distribution.
 
 ## Testing
