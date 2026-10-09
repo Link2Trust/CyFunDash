@@ -271,6 +271,7 @@
     let data = null;
     let scores = {};
     let selectedLevel = 'Essential';
+    let reqIdLookup = null; // lazily built by findReqId(); must be declared before init() runs
     const STORAGE_KEY = 'cyfun2025_scores';
     const LEVEL_HIERARCHY = { 'Basic': 1, 'Important': 2, 'Essential': 3 };
     const FN_COLORS = {
@@ -365,7 +366,6 @@
     }
 
     // Lookup: requirement code (e.g. "PR.AA-01.1") -> reqId, built lazily once.
-    let reqIdLookup = null;
     function buildReqIdLookup() {
       const lookup = {};
       forEachRequirement((fnName, ci, si, ri, req) => {
